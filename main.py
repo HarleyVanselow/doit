@@ -62,8 +62,12 @@ def handle_vote(data):
     pass
 
 
+def get_db_client():
+    return firestore.Client(project="promising-silo-421623")
+
+
 def handle_nominate(data):
-    db = firestore.Client(project="promising-silo-421623")
+    db = get_db_client()
     doc = db.collection("nominations").document()
     doc.set(
         {
