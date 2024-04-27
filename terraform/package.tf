@@ -3,14 +3,14 @@ locals {
 }
 
 data "template_file" "t_file" {
-  count = "${length(local.source_files)}"
+  count = length(local.source_files)
 
-  template = "${file(element(local.source_files, count.index))}"
+  template = file(element(local.source_files, count.index))
 }
 resource "local_file" "to_temp_dir" {
-  count    = "${length(local.source_files)}"
+  count    = length(local.source_files)
   filename = "${path.module}/temp/${basename(element(local.source_files, count.index))}"
-  content  = "${element(data.template_file.t_file.*.rendered, count.index)}"
+  content  = element(data.template_file.t_file.*.rendered, count.index)
 }
 
 data "archive_file" "archive" {
