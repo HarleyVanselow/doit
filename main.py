@@ -40,5 +40,10 @@ def hello_http(request: flask.Request):
         return {"type": 1}
     return {
         "type":4,
-        "data": request_json
+        "data": {
+                "tts": False,
+                "content": f"Congrats on sending your command! - Recieved {request_json}",
+                "embeds": [],
+                "allowed_mentions": { "parse": [] }
+            }
     }
