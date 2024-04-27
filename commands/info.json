@@ -1,13 +1,13 @@
 {
-    "name": "nominate",
+    "name": "info",
     "type": 1,
-    "description": "Nominate a movie",
+    "description": "Get info on a movie",
     "options":[
         {
             "name":"movie",
             "type":3,
             "required":true,
-            "description":"Name or IMDB link to movie"
+            "description":"Name or IMDB link to movie for details"
         }
     ]
 }

@@ -1,0 +1,22 @@
+{
+    "name": "vote",
+    "type": 1,
+    "description": "Vote activities",
+    "options": [
+        {
+            "name": "start",
+            "description": "Start the vote",
+            "type": 1
+        },
+        {
+            "name": "stop",
+            "description": "End the vote",
+            "type": 1
+        },
+        {
+            "name": "voters",
+            "description": "View current voters",
+            "type": 1
+        }
+    ]
+}

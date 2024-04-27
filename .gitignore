@@ -33,3 +33,5 @@ override.tf.json
 .terraformrc
 terraform.rc
 *.pyc
+terraform/temp/*
+terraform/moviebot.zip

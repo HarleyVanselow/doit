@@ -2,7 +2,7 @@ terraform {
   required_providers {
     google = {
       source  = "hashicorp/google"
-      version = "4.51.0"
+      version = "5.26.0"
     }
   }
   backend "gcs" {
@@ -52,3 +52,8 @@ resource "google_cloud_run_service_iam_binding" "binding" {
   ]
 }
 
+resource "google_firestore_database" "database" {
+  name        = "(default)"
+  location_id = "nam5"
+  type        = "FIRESTORE_NATIVE"
+}

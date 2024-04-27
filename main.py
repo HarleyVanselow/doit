@@ -1,7 +1,8 @@
 import os
+import time
 import flask
 import functions_framework
-
+from google.cloud import firestore
 from nacl.signing import VerifyKey
 from nacl.exceptions import BadSignatureError
 
@@ -33,17 +34,42 @@ def hello_http(request: flask.Request):
         Response object using `make_response`
         <https://flask.palletsprojects.com/en/1.1.x/api/#flask.make_response>.
     """
-    if not 'IS_LOCAL' in os.environ:
+    if not "IS_LOCAL" in os.environ:
         verify_request(request)
     request_json = request.get_json(silent=True)
     if request_json["type"] == 1:
         return {"type": 1}
+    match request_json["data"]["name"]:
+        case "vote":
+            content = handle_vote(request_json)
+        case "nominate":
+            content = handle_nominate(request_json)
+        case "info":
+            content = handle_info(request_json)
+        case _:
+            content = "That command has no action set yet"
     return {
-        "type":4,
+        "type": 4,
         "data": {
-                "tts": False,
-                "content": f"Congrats on sending your command! - Recieved {request_json}",
-                "embeds": [],
-                "allowed_mentions": { "parse": [] }
-            }
+            "tts": False,
+            "content": content,
+        },
     }
+
+
+def handle_vote(data):
+    pass
+
+
+def handle_nominate(data):
+    db = firestore.Client(project="promising-silo-421623")
+    doc = db.collection("nominations").document()
+    doc.set({"Title": data["options"][0]["value"], "date": time.time(), "nominator":data["member"]["user"]["username"]})
+
+    return "Registered nomination!"
+
+
+def handle_info(data):
+    pass
+
+db = firestore.Client(project="promising-silo-421623")
