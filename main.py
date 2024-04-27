@@ -39,6 +39,7 @@ def hello_http(request: flask.Request):
     request_json = request.get_json(silent=True)
     if request_json["type"] == 1:
         return {"type": 1}
+    print(f"Recieved {request_json}")
     match request_json["data"]["name"]:
         case "vote":
             content = handle_vote(request_json)
@@ -64,12 +65,16 @@ def handle_vote(data):
 def handle_nominate(data):
     db = firestore.Client(project="promising-silo-421623")
     doc = db.collection("nominations").document()
-    doc.set({"Title": data["options"][0]["value"], "date": time.time(), "nominator":data["member"]["user"]["username"]})
+    doc.set(
+        {
+            "title": data["data"]["options"][0]["value"],
+            "date": time.time(),
+            "nominator": data["member"]["user"]["username"],
+        }
+    )
 
     return "Registered nomination!"
 
 
 def handle_info(data):
     pass
-
-db = firestore.Client(project="promising-silo-421623")

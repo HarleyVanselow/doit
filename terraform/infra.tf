@@ -37,7 +37,7 @@ resource "google_storage_bucket" "bucket" {
 }
 
 resource "google_storage_bucket_object" "archive" {
-  name   = "index.zip"
+  name   = "${timestamp()}.zip"
   bucket = google_storage_bucket.bucket.name
   source = data.archive_file.archive.output_path
 }
