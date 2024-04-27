@@ -36,8 +36,7 @@ def hello_http(request: flask.Request):
     if not 'IS_LOCAL' in os.environ:
         verify_request(request)
     request_json = request.get_json(silent=True)
-    request_args = request.args
-    if request.path == "/":
+    if request_json["type"] == 1:
         return {"type": 1}
     return {
         "type":4,

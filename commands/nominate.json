@@ -1,0 +1,5 @@
+{
+    "name": "nominate",
+    "type": 1,
+    "description": "Nominate a movie by name or IMDB link"
+}
