@@ -1,3 +1,4 @@
+import os
 import flask
 import functions_framework
 
@@ -32,6 +33,8 @@ def hello_http(request: flask.Request):
         Response object using `make_response`
         <https://flask.palletsprojects.com/en/1.1.x/api/#flask.make_response>.
     """
+    if not 'IS_LOCAL' in os.environ:
+        verify_request(request)
     request_json = request.get_json(silent=True)
     request_args = request.args
     if request.path == "/":
