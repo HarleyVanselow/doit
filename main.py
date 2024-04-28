@@ -238,7 +238,7 @@ def handle_vote_cast(data):
     vote = get_vote(db, Vote.status_running)
     if not vote:
         return "Can't cast ballot - no vote currently running"
-    ballot_text = data["data"]["options"][0]["value"]
+    ballot_text = data["data"]["options"][0]["options"][0]["value"]
     if ballot_text.startswith("random"):
         ballot_text = ballot_text.replace("random ", "")
         choice = int(random.choice(ballot_text.split(" ")))

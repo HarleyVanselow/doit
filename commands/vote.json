@@ -20,8 +20,15 @@
         },
         {
             "name": "cast",
-            "description": "Vote for a movie, or a random choice of several",
-            "type": 3
+            "description": "Vote for a movie",
+            "type": 1,
+            "options": [
+                {
+                    "name": "ballot",
+                    "description":"A number, or `random 1 2 3...` for a mostly random vote",
+                    "type":3
+                }
+            ]
         }
     ]
 }
