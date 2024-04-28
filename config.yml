@@ -3,3 +3,5 @@ discord:
   application-id: 1233603538651713666
 google:
   project-id: promising-silo-421623
+omdb:
+  url: http://www.omdbapi.com

@@ -4,10 +4,16 @@
     "description": "Nominate a movie",
     "options":[
         {
-            "name":"movie",
+            "name":"title",
             "type":3,
             "required":true,
-            "description":"Name or IMDB link to movie"
+            "description":"Name of movie, optionally with (year)"
+        },
+        {
+            "name":"id",
+            "type":3,
+            "required":true,
+            "description":"IMDB ID of movie"
         }
     ]
 }
