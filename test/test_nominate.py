@@ -32,10 +32,16 @@ vote_voters_data = {
 nominate_data_1 = {
     "id": "1233616675837055047",
     "name": "nominate",
-    "options": [{"name": "title", "type": 3, "value": "Spider-man 2"}],
+    "options": [{"name": "title", "type": 3, "value": "Spider-man"}],
     "type": 1,
 }
 nominate_data_2 = {
+    "id": "1233616675837055047",
+    "name": "nominate",
+    "options": [{"name": "title", "type": 3, "value": "Spider-man 2"}],
+    "type": 1,
+}
+nominate_data_3 = {
     "id": "1233616675837055047",
     "name": "nominate",
     "options": [{"name": "title", "type": 3, "value": "Spider-man 3"}],
@@ -60,6 +66,8 @@ def fake_omdb(query):
         return spiderman2
     elif query["t"] == "Spider-man 3":
         return spiderman3
+    elif query["t"] == "Spider-man":
+        return spiderman1
 
 
 @patch("main.search_movie")
@@ -147,15 +155,21 @@ def vote_start():
 
 
 def nominations():
+    # Member 1 nominates data 1
     sample_payload["data"] = nominate_data_1
     sample_payload["member"] = member_1
     result = handle_nominate(sample_payload)
     assert result == "Registered nomination!"
+    # Member 2 nominates data 2
     sample_payload["data"] = nominate_data_2
     sample_payload["member"] = member_2
     result = handle_nominate(sample_payload)
     assert result == "Registered nomination!"
-
+    # Member 1 changes their mind and nominates 3
+    sample_payload["data"] = nominate_data_3
+    sample_payload["member"] = member_1
+    result = handle_nominate(sample_payload)
+    assert result == "Registered nomination!"
 
 # def test_nominate():
 # 	# db = get_db_client()

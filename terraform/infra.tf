@@ -21,12 +21,15 @@ resource "google_cloudfunctions2_function" "moviebot" {
   description = "My function"
   location    = "us-east1"
 
-  build_config {
-    runtime     = "python312"
-    entry_point = "hello_http" # Set the entry point 
+  service_config {
     environment_variables = {
       "OMDB_API_KEY" : var.OMDB_API_KEY
     }
+  }
+  build_config {
+    runtime     = "python312"
+    entry_point = "hello_http" # Set the entry point 
+    
     source {
       storage_source {
         bucket = google_storage_bucket.bucket.name

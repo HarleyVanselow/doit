@@ -127,9 +127,9 @@ def create_nomination(db, movie, nomination_context):
     nomination = Nomination(
         movie_id=movie.imdb_id, title=movie.title, nominator=nomination_context["user"]
     )
-    db.collection(VOTES_COLLECTION).document(vote.id).update(
-        {"nominations": firestore.ArrayUnion([nomination.__dict__])}
-    )
+    vote.nominations = [n for n in vote.nominations if n.nominator != nomination_context["user"]]
+    vote.nominations.append(nomination)
+    db.collection(VOTES_COLLECTION).document(vote.id).set(vote.to_dict())
 
 
 def end_vote(db, vote: Vote):
