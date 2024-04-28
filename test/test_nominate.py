@@ -124,7 +124,8 @@ def test_flow(mock_db, mock_omdb):
 def test_info(mock_omdb):
     # There should always be a vote
     mock_omdb.side_effect = fake_omdb
-    assert handle_info(view_info_data).startswith(spiderman1["Title"])
+    sample_payload["data"] = view_info_data
+    assert handle_info(sample_payload).startswith("**"+spiderman1["Title"]+"**")
 
 
 # def test_real_flow():
