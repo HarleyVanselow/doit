@@ -19,6 +19,11 @@
             "type": 1
         },
         {
+            "name":"nominations",
+            "description": "View current nominations",
+            "type": 1
+        },
+        {
             "name": "cast",
             "description": "Vote for a movie",
             "type": 1,

@@ -2,7 +2,9 @@ from unittest.mock import patch
 from main import (
     create_vote,
     get_db_client,
+    handle_info,
     handle_nominate,
+    handle_view_nominations,
     handle_vote_cast,
     handle_vote_end,
     handle_vote_start,
@@ -29,6 +31,18 @@ vote_voters_data = {
     "options": [{"name": "voters", "type": 1}],
     "type": 1,
 }
+view_info_data = {
+    "id": "1233616675837055047",
+    "name": "info",
+    "options": [{"name": "movie", "type": 3, "value": "Spider-man"}],
+    "type": 3,
+}
+vote_nominees_data = {
+    "id": "1233616675837055047",
+    "name": "vote",
+    "options": [{"name": "nominations", "type": 1}],
+    "type": 1,
+}
 nominate_data_1 = {
     "id": "1233616675837055047",
     "name": "nominate",
@@ -50,13 +64,25 @@ nominate_data_3 = {
 vote_data_1 = {
     "id": "1233616675837055047",
     "name": "vote",
-    "options": [{"name": "cast", "type": 1, "options": [{"name":"ballot", "type":1, "value":"1"}]}],
+    "options": [
+        {
+            "name": "cast",
+            "type": 1,
+            "options": [{"name": "ballot", "type": 1, "value": "1"}],
+        }
+    ],
     "type": 1,
 }
 vote_data_2 = {
     "id": "1233616675837055047",
     "name": "vote",
-    "options": [{"name": "cast", "type": 1, "options": [{"name":"ballot", "type":1, "value":"random 2 2 2"}]}],
+    "options": [
+        {
+            "name": "cast",
+            "type": 1,
+            "options": [{"name": "ballot", "type": 1, "value": "random 2 2 2"}],
+        }
+    ],
     "type": 1,
 }
 
@@ -80,6 +106,8 @@ def test_flow(mock_db, mock_omdb):
     create_vote(mock_firestore)
     # Nominate 2 movies
     nominations()
+    # View nominations
+    view_nominations()
     # Start vote
     vote_start()
     # Four votes, with movie #2 winning
@@ -90,6 +118,13 @@ def test_flow(mock_db, mock_omdb):
     end_vote()
     # Should be able to start nominating again
     nominations()
+
+
+@patch("main.search_movie")
+def test_info(mock_omdb):
+    # There should always be a vote
+    mock_omdb.side_effect = fake_omdb
+    assert handle_info(view_info_data).startswith(spiderman1["Title"])
 
 
 # def test_real_flow():
@@ -114,6 +149,12 @@ def end_vote():
     assert vote_end_message.startswith(
         "Voting has ended! The results:\nSpider-Man 2: 1\nSpider-Man 3: 3\nThe winner is: Spider-Man 3"
     )
+
+
+def view_nominations():
+    sample_payload["data"] = vote_nominees_data
+    voters = handle_view_nominations(sample_payload)
+    assert voters == "Current nominations:\n(1) Spider-Man 2\n(2) Spider-Man 3"
 
 
 def view_voters():
@@ -170,6 +211,7 @@ def nominations():
     sample_payload["member"] = member_1
     result = handle_nominate(sample_payload)
     assert result == "Registered nomination!"
+
 
 # def test_nominate():
 # 	# db = get_db_client()

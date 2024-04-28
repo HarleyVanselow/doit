@@ -148,6 +148,12 @@ def handle_vote(data):
     else:
         return NO_COMMAND_MESSAGE(action)
 
+def handle_view_nominations(data):
+    db = get_db_client()
+    active_vote = get_vote(db, Vote.status_created)
+    nominations = "\n".join([f"({i+1}) {n.title}" for i, n in enumerate(active_vote.nominations)])
+    return f"Current nominations:\n{nominations}"
+
 
 def handle_vote_start(data):
     db = get_db_client()
@@ -272,7 +278,15 @@ def handle_nominate(data):
 
 
 def handle_info(data):
-    pass
+    movie_text = data["data"]["options"][0]["value"]
+    if match := re.match(r"([\s\S]+) \((\d+)\)$", movie_text):
+        query = {"t": match.group(1), "y": match.group(2)}
+    else:
+        query = {"t": movie_text}
+    search_result = search_movie(query)
+    if search_result["Response"] == "False":
+        return "No movie found!"
+    return Movie(search_result).info()
 
 
 commands = {
@@ -285,6 +299,7 @@ vote_commands = {
     "end": handle_vote_end,
     "voters": handle_vote_voters,
     "cast": handle_vote_cast,
+    "nominations": handle_view_nominations,
 }
 
 
