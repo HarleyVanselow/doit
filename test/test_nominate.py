@@ -1,71 +1,164 @@
 from unittest.mock import patch
-from main import handle_nominate
+from main import (
+    create_vote,
+    get_db_client,
+    handle_nominate,
+    handle_vote_cast,
+    handle_vote_end,
+    handle_vote_start,
+    handle_vote_voters,
+)
 from mockfirestore import MockFirestore
+from test_data import *
 
-sample_payload = {
-        "app_permissions": "442368",
-        "application_id": "1233603538651713666",
-        "channel": {
-            "flags": 0,
-            "guild_id": "767879878636339210",
-            "id": "767921648224960532",
-            "last_message_id": "1233640676726673439",
-            "last_pin_timestamp": "2020-11-14T01:23:32.570000+00:00",
-            "name": "general",
-            "nsfw": False,
-            "parent_id": "767879878636339211",
-            "permissions": "1125899906842623",
-            "position": 0,
-            "rate_limit_per_user": 0,
-            "topic": None,
-            "type": 0,
-        },
-        "channel_id": "767921648224960532",
-        "data": {
-            "id": "1233616675837055047",
-            "name": "nominate",
-            "options": [{"name": "movie", "type": 3, "value": "test"}],
-            "type": 1,
-        },
-        "entitlement_sku_ids": [],
-        "entitlements": [],
-        "guild": {"features": [], "id": "767879878636339210", "locale": "en-US"},
-        "guild_id": "767879878636339210",
-        "guild_locale": "en-US",
-        "id": "1233649968812654642",
-        "locale": "en-US",
-        "member": {
-            "avatar": None,
-            "communication_disabled_until": None,
-            "deaf": False,
-            "flags": 0,
-            "joined_at": "2020-10-19T22:40:29.595000+00:00",
-            "mute": False,
-            "nick": "Arnie",
-            "pending": False,
-            "permissions": "1125899906842623",
-            "premium_since": None,
-            "roles": ["767884300988186625"],
-            "unusual_dm_activity_until": None,
-            "user": {
-                "avatar": "c6ca17624b3581983b24f6f52794f712",
-                "avatar_decoration_data": None,
-                "clan": None,
-                "discriminator": "0",
-                "global_name": "Quaznal",
-                "id": "146849859905781760",
-                "public_flags": 0,
-                "username": "quaznal",
-            },
-        },
-        "token": "xxx",
-        "type": 2,
-        "version": 1,
-    }
+vote_start_data = {
+    "id": "1233616675837055047",
+    "name": "vote",
+    "options": [{"name": "start", "type": 1}],
+    "type": 1,
+}
+vote_end_data = {
+    "id": "1233616675837055047",
+    "name": "vote",
+    "options": [{"name": "end", "type": 1}],
+    "type": 1,
+}
+vote_voters_data = {
+    "id": "1233616675837055047",
+    "name": "vote",
+    "options": [{"name": "voters", "type": 1}],
+    "type": 1,
+}
+nominate_data_1 = {
+    "id": "1233616675837055047",
+    "name": "nominate",
+    "options": [{"name": "title", "type": 3, "value": "Spider-man 2"}],
+    "type": 1,
+}
+nominate_data_2 = {
+    "id": "1233616675837055047",
+    "name": "nominate",
+    "options": [{"name": "title", "type": 3, "value": "Spider-man 3"}],
+    "type": 1,
+}
+vote_data_1 = {
+    "id": "1233616675837055047",
+    "name": "vote",
+    "options": [{"name": "ballot", "type": 3, "value": "1"}],
+    "type": 1,
+}
+vote_data_2 = {
+    "id": "1233616675837055047",
+    "name": "vote",
+    "options": [{"name": "ballot", "type": 3, "value": "random 2 2 2"}],
+    "type": 1,
+}
 
 
+def fake_omdb(query):
+    if query["t"] == "Spider-man 2":
+        return spiderman2
+    elif query["t"] == "Spider-man 3":
+        return spiderman3
+
+
+@patch("main.search_movie")
 @patch("main.get_db_client")
-def test_nominate(mock_db):
-	mock_db.return_value = MockFirestore()
-	result = handle_nominate(sample_payload)
-	assert result == "Registered nomination!"
+def test_flow(mock_db, mock_omdb):
+    # There should always be a vote
+    mock_firestore = MockFirestore()
+    mock_db.return_value = mock_firestore
+    mock_omdb.side_effect = fake_omdb
+    create_vote(mock_firestore)
+    # Nominate 2 movies
+    nominations()
+    # Start vote
+    vote_start()
+    # Four votes, with movie #2 winning
+    voting()
+    # View voters
+    view_voters()
+    # Vote ends
+    end_vote()
+    # Should be able to start nominating again
+    nominations()
+
+
+# def test_real_flow():
+#     # There should always be a vote
+#     db = get_db_client()
+#     create_vote(db)
+#     # Nominate 2 movies
+#     nominations()
+#     # Start vote
+#     vote_start()
+#     # Four votes, with movie #2 winning
+#     voting()
+#     # View voters
+#     view_voters()
+#     # Vote ends
+#     end_vote()
+#     # Should be able to start nominating again
+#     nominations()
+def end_vote():
+    sample_payload["data"] = vote_end_data
+    vote_end_message = handle_vote_end(sample_payload)
+    assert vote_end_message.startswith(
+        "Voting has ended! The results:\nSpider-Man 2: 1\nSpider-Man 3: 3\nThe winner is: Spider-Man 3"
+    )
+
+
+def view_voters():
+    sample_payload["data"] = vote_voters_data
+    voters = handle_vote_voters(sample_payload)
+    assert voters == "Current voters:\nlanzauq\nmysteryjudge\nquaznal\ntiemaker"
+
+
+def voting():
+    # User 1 votes for option 1
+    sample_payload["member"] = member_1
+    sample_payload["data"] = vote_data_1
+    assert "Ballot cast!" == handle_vote_cast(sample_payload)
+    # User 2 votes for option 2
+    sample_payload["member"] = member_2
+    sample_payload["data"] = vote_data_2
+    assert "Ballot cast!" == handle_vote_cast(sample_payload)
+    # User 3 votes for option 2
+    sample_payload["member"] = member_3
+    sample_payload["data"] = vote_data_2
+    assert "Ballot cast!" == handle_vote_cast(sample_payload)
+    # User 4 votes for option 1, then switches to option 2
+    sample_payload["member"] = member_4
+    sample_payload["data"] = vote_data_1
+    assert "Ballot cast!" == handle_vote_cast(sample_payload)
+    sample_payload["data"] = vote_data_2
+    assert "Ballot cast!" == handle_vote_cast(sample_payload)
+
+
+def vote_start():
+    sample_payload["data"] = vote_start_data
+    result = handle_vote_start(sample_payload)
+    assert (
+        result
+        == """Voting has opened!
+(1) Spider-Man 2
+(2) Spider-Man 3"""
+    )
+
+
+def nominations():
+    sample_payload["data"] = nominate_data_1
+    sample_payload["member"] = member_1
+    result = handle_nominate(sample_payload)
+    assert result == "Registered nomination!"
+    sample_payload["data"] = nominate_data_2
+    sample_payload["member"] = member_2
+    result = handle_nominate(sample_payload)
+    assert result == "Registered nomination!"
+
+
+# def test_nominate():
+# 	# db = get_db_client()
+# 	# create_vote(db)
+# 	result = handle_nominate(sample_payload)
+# 	assert result == "Registered nomination!"

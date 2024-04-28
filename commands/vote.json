@@ -17,6 +17,11 @@
             "name": "voters",
             "description": "View current voters",
             "type": 1
+        },
+        {
+            "name": "cast",
+            "description": "Vote for a movie, or a random choice of several",
+            "type": 3
         }
     ]
 }

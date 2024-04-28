@@ -14,6 +14,7 @@ provider "google" {
   project = "promising-silo-421623"
   region  = "us-east1"
 }
+variable "OMDB_API_KEY" {}
 
 resource "google_cloudfunctions2_function" "moviebot" {
   name        = "moviebot"
@@ -23,6 +24,9 @@ resource "google_cloudfunctions2_function" "moviebot" {
   build_config {
     runtime     = "python312"
     entry_point = "hello_http" # Set the entry point 
+    environment_variables = {
+      "OMDB_API_KEY" : var.OMDB_API_KEY
+    }
     source {
       storage_source {
         bucket = google_storage_bucket.bucket.name
