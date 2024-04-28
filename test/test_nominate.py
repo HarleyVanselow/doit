@@ -50,13 +50,13 @@ nominate_data_3 = {
 vote_data_1 = {
     "id": "1233616675837055047",
     "name": "vote",
-    "options": [{"name": "ballot", "type": 3, "value": "1"}],
+    "options": [{"name": "cast", "type": 1, "options": [{"name":"ballot", "type":1, "value":"1"}]}],
     "type": 1,
 }
 vote_data_2 = {
     "id": "1233616675837055047",
     "name": "vote",
-    "options": [{"name": "ballot", "type": 3, "value": "random 2 2 2"}],
+    "options": [{"name": "cast", "type": 1, "options": [{"name":"ballot", "type":1, "value":"random 2 2 2"}]}],
     "type": 1,
 }
 

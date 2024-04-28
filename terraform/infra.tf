@@ -29,7 +29,7 @@ resource "google_cloudfunctions2_function" "moviebot" {
   build_config {
     runtime     = "python312"
     entry_point = "hello_http" # Set the entry point 
-    
+
     source {
       storage_source {
         bucket = google_storage_bucket.bucket.name
