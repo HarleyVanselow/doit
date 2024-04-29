@@ -9,7 +9,7 @@
             "type": 1
         },
         {
-            "name": "stop",
+            "name": "end",
             "description": "End the vote",
             "type": 1
         },
@@ -22,6 +22,11 @@
             "name":"nominations",
             "description": "View current nominations",
             "type": 1
+        },
+        {
+            "name": "delete",
+            "description": "Delete your nomination",
+            "type":1
         },
         {
             "name": "cast",

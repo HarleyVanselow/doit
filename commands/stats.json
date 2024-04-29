@@ -1,0 +1,43 @@
+{
+	"name": "stats",
+	"type": 1,
+	"description": "View interesting statistics",
+	"options": [
+		{
+			"name": "server",
+			"description": "Global server stats",
+			"type": 1
+		},
+		{
+			"name": "user",
+			"description": "Get stats about a specific user",
+			"type": 1,
+			"options": [
+				{
+					"name": "user",
+					"description": "The user to get stats on",
+					"type": 6
+				}
+			]
+		},
+		{
+			"name": "movie",
+			"description": "Get stats about a specific movie",
+			"type": 1,
+			"options": [
+				{
+					"name": "title",
+					"type": 3,
+					"required": true,
+					"description": "Name of movie, optionally with (year)"
+				},
+				{
+					"name": "id",
+					"type": 3,
+					"required": true,
+					"description": "IMDB ID of movie"
+				}
+			]
+		}
+	]
+}

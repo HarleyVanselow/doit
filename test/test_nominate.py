@@ -4,6 +4,7 @@ from main import (
     get_db_client,
     handle_info,
     handle_nominate,
+    handle_stats,
     handle_view_nominations,
     handle_vote_cast,
     handle_vote_end,
@@ -13,6 +14,12 @@ from main import (
 from mockfirestore import MockFirestore
 from test_data import *
 
+server_stats_data = {
+    "id": "1233616675837055047",
+    "name": "stats",
+    "options": [{"name": "server", "type": 1}],
+    "type": 1,
+}
 vote_start_data = {
     "id": "1233616675837055047",
     "name": "vote",
@@ -59,6 +66,18 @@ nominate_data_3 = {
     "id": "1233616675837055047",
     "name": "nominate",
     "options": [{"name": "title", "type": 3, "value": "Spider-man 3"}],
+    "type": 1,
+}
+vote_data_random = {
+    "id": "1233616675837055047",
+    "name": "vote",
+    "options": [
+        {
+            "name": "cast",
+            "type": 1,
+            "options": [{"name": "ballot", "type": 1, "value": "random"}],
+        }
+    ],
     "type": 1,
 }
 vote_data_1 = {
@@ -118,6 +137,25 @@ def test_flow(mock_db, mock_omdb):
     end_vote()
     # Should be able to start nominating again
     nominations()
+    # Get server stats so far
+    stats()
+
+
+@patch("main.search_movie")
+@patch("main.get_db_client")
+def test_random_nomination(mock_db, mock_omdb):
+    # There should always be a vote
+    mock_firestore = MockFirestore()
+    mock_db.return_value = mock_firestore
+    mock_omdb.side_effect = fake_omdb
+    create_vote(mock_firestore)
+    # Nominate 2 movies
+    nominations()
+    vote_start()
+    # User 1 votes for option 1
+    sample_payload["member"] = member_1
+    sample_payload["data"] = vote_data_random
+    assert "Ballot cast!" == handle_vote_cast(sample_payload)
 
 
 @patch("main.search_movie")
@@ -125,7 +163,7 @@ def test_info(mock_omdb):
     # There should always be a vote
     mock_omdb.side_effect = fake_omdb
     sample_payload["data"] = view_info_data
-    assert handle_info(sample_payload).startswith("**"+spiderman1["Title"]+"**")
+    assert handle_info(sample_payload).startswith("**" + spiderman1["Title"] + "**")
 
 
 # def test_real_flow():
@@ -151,6 +189,10 @@ def end_vote():
         "Voting has ended! The results:\nSpider-Man 2: 1\nSpider-Man 3: 3\nThe winner is: Spider-Man 3"
     )
 
+def stats():
+    sample_payload["data"] = server_stats_data
+    stats = handle_stats(sample_payload)
+    assert "**Server Stats**\n2 movies have been nominated, and we have watched 2 movies with an average metacritic score of 59.0\n" == stats
 
 def view_nominations():
     sample_payload["data"] = vote_nominees_data

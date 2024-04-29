@@ -1,4 +1,5 @@
 from datetime import datetime
+from functools import reduce
 import os
 import random
 import re
@@ -10,6 +11,9 @@ from nacl.exceptions import BadSignatureError
 from requests import request
 import requests
 
+# Constants & Config
+OMDB_BASE_URL = "http://www.omdbapi.com"
+GCP_PROJECT_ID = "promising-silo-421623"
 DISCORD_PUBLIC_KEY = "9416d2be504b253e228d3149e29825294715d261c348d9c7e2618276bb1419c8"
 NO_COMMAND_MESSAGE = lambda m: f"No handling for command {m} yet"
 NOMINATIONS_COLLECTION = "nominations"
@@ -17,6 +21,7 @@ VOTES_COLLECTION = "votes"
 MOVIE_COLLECTION = "movies"
 
 
+# Models
 class Movie:
     def __init__(self, data):
         if "Title" in data:
@@ -101,6 +106,14 @@ class Vote:
         raw["nominations"] = [n.__dict__ for n in raw["nominations"]]
         return raw
 
+    def save(self, db):
+        db.collection(VOTES_COLLECTION).document(self.id).set(self.to_dict())
+
+
+# DB interactions
+def get_db_client():
+    return firestore.Client(project=GCP_PROJECT_ID)
+
 
 def create_vote(db):
     vote = get_vote(db, Vote.status_created)
@@ -127,32 +140,20 @@ def create_nomination(db, movie, nomination_context):
     nomination = Nomination(
         movie_id=movie.imdb_id, title=movie.title, nominator=nomination_context["user"]
     )
-    vote.nominations = [n for n in vote.nominations if n.nominator != nomination_context["user"]]
+    vote.nominations = [
+        n for n in vote.nominations if n.nominator != nomination_context["user"]
+    ]
     vote.nominations.append(nomination)
-    db.collection(VOTES_COLLECTION).document(vote.id).set(vote.to_dict())
+    vote.save(db)
 
 
-def end_vote(db, vote: Vote):
-    top_score = max([len(n.votes) for n in vote.nominations])
-    winner = random.choice([n for n in vote.nominations if len(n.votes) == top_score])
-    winner.won = True
-    vote.status = Vote.status_completed
-    db.collection(VOTES_COLLECTION).document(vote.id).set(vote.to_dict())
-    return vote
-
-
+# Voting
 def handle_vote(data):
     action = data["data"]["options"][0]["name"]
     if action in vote_commands:
         return vote_commands[action](data)
     else:
         return NO_COMMAND_MESSAGE(action)
-
-def handle_view_nominations(data):
-    db = get_db_client()
-    active_vote = get_vote(db, Vote.status_created)
-    nominations = "\n".join([f"({i+1}) {n.title}" for i, n in enumerate(active_vote.nominations)])
-    return f"Current nominations:\n{nominations}"
 
 
 def handle_vote_start(data):
@@ -169,6 +170,15 @@ def handle_vote_start(data):
         [f"({i+1}) {nom.title}" for i, nom in enumerate(active_vote.nominations)]
     )
     return f"Voting has opened!\n{nominations_list}"
+
+
+def end_vote(db, vote: Vote):
+    top_score = max([len(n.votes) for n in vote.nominations])
+    winner = random.choice([n for n in vote.nominations if len(n.votes) == top_score])
+    winner.won = True
+    vote.status = Vote.status_completed
+    vote.save(db)
+    return vote
 
 
 def handle_vote_end(data):
@@ -202,16 +212,84 @@ def handle_vote_voters(data):
     if not current_vote:
         return "No active vote"
     else:
-        current_voters = "\n".join(sorted([vote["user"] for nomination in current_vote.nominations for vote in nomination.votes]))
+        current_voters = "\n".join(
+            sorted(
+                [
+                    vote["user"]
+                    for nomination in current_vote.nominations
+                    for vote in nomination.votes
+                ]
+            )
+        )
         return f"Current voters:\n{current_voters}"
 
 
-def get_db_client():
-    return firestore.Client(project="promising-silo-421623")
+def handle_vote_cast(data):
+    voter = get_username(data)
+    db = get_db_client()
+    vote = get_vote(db, Vote.status_running)
+    if not vote:
+        return "Can't cast ballot - no vote currently running"
+    ballot_text = data["data"]["options"][0]["options"][0]["value"]
+    if ballot_text.startswith("random"):
+        ballot_text = ballot_text.replace("random", "").strip()
+        if ballot_text == "":
+            options = range(len(vote.nominations))
+        else:
+            options = ballot_text.split(" ")
+        choice = int(random.choice(options))
+    else:
+        choice = int(ballot_text)
+    # If a user has already voted, remove it and place their new one
+    for nomination in vote.nominations:
+        nomination.votes = [v for v in nomination.votes if v["user"] != voter]
+    vote.nominations[choice - 1].votes.append({"user": voter})
+    vote.save(db)
+    return "Ballot cast!"
 
 
+# Nominations
+def handle_view_nominations(data):
+    db = get_db_client()
+    active_vote = get_vote(db, Vote.status_created)
+    nominations = "\n".join(
+        [f"({i+1}) {n.title}" for i, n in enumerate(active_vote.nominations)]
+    )
+    return f"Current nominations:\n{nominations}"
+
+
+def handle_nominate(data):
+    nomination_context = {"user": get_username(data)}
+    db = get_db_client()
+    nom = data["data"]["options"][0]
+    if nom["name"] == "id":
+        query = {"i": nom["value"]}
+    elif match := re.match(r"([\s\S]+) \((\d+)\)$", nom["value"]):
+        query = {"t": match.group(1), "y": match.group(2)}
+    else:
+        query = {"t": nom["value"]}
+    search_result = search_movie(query)
+    if search_result["Response"] == "False":
+        return "No movie found!"
+    movie = get_or_create_movie(db, search_result, nomination_context)
+    create_nomination(db, movie, nomination_context)
+
+    return "Registered nomination!"
+
+
+def handle_delete(data):
+    db = get_db_client()
+    vote = get_vote(db, Vote.status_created)
+    if not vote:
+        return "Cannot delete nomination - vote is in progress"
+    vote.nominations = [n for n in vote.nominations if n.user != get_username(data)]
+    vote.save(db)
+    return "Nomination deleted!"
+
+
+# Movies
 def search_movie(query):
-    base_url = f"http://www.omdbapi.com?apikey={os.environ['OMDB_API_KEY']}&"
+    base_url = f"{OMDB_BASE_URL}?apikey={os.environ['OMDB_API_KEY']}&"
     base_url += "&".join([f"{k}={v}" for k, v in query.items()])
     return requests.get(base_url).json()
 
@@ -234,49 +312,12 @@ def get_or_create_movie(db, search_result, nomination_context):
         return new_movie
 
 
+# Helper functions
 def get_username(data):
     return data["member"]["user"]["username"]
 
 
-def handle_vote_cast(data):
-    voter = get_username(data)
-    db = get_db_client()
-    vote = get_vote(db, Vote.status_running)
-    if not vote:
-        return "Can't cast ballot - no vote currently running"
-    ballot_text = data["data"]["options"][0]["options"][0]["value"]
-    if ballot_text.startswith("random"):
-        ballot_text = ballot_text.replace("random ", "")
-        choice = int(random.choice(ballot_text.split(" ")))
-    else:
-        choice = int(ballot_text)
-    # If a user has already voted, remove it and place their new one
-    for nomination in vote.nominations:
-        nomination.votes = [v for v in nomination.votes if v["user"] != voter]
-    vote.nominations[choice - 1].votes.append({"user": voter})
-    db.collection(VOTES_COLLECTION).document(vote.id).set(vote.to_dict())
-    return "Ballot cast!"
-
-
-def handle_nominate(data):
-    nomination_context = {"user": get_username(data)}
-    db = get_db_client()
-    nom = data["data"]["options"][0]
-    if nom["name"] == "id":
-        query = {"i": nom["value"]}
-    elif match := re.match(r"([\s\S]+) \((\d+)\)$", nom["value"]):
-        query = {"t": match.group(1), "y": match.group(2)}
-    else:
-        query = {"t": nom["value"]}
-    search_result = search_movie(query)
-    if search_result["Response"] == "False":
-        return "No movie found!"
-    movie = get_or_create_movie(db, search_result, nomination_context)
-    create_nomination(db, movie, nomination_context)
-
-    return "Registered nomination!"
-
-
+# Info
 def handle_info(data):
     movie_text = data["data"]["options"][0]["value"]
     if match := re.match(r"([\s\S]+) \((\d+)\)$", movie_text):
@@ -289,20 +330,49 @@ def handle_info(data):
     return Movie(search_result).info()
 
 
-commands = {
-    "vote": handle_vote,
-    "nominate": handle_nominate,
-    "info": handle_info,
-}
-vote_commands = {
-    "start": handle_vote_start,
-    "end": handle_vote_end,
-    "voters": handle_vote_voters,
-    "cast": handle_vote_cast,
-    "nominations": handle_view_nominations,
-}
+# Stats
+def handle_stats(data):
+    action = data["data"]["options"][0]["name"]
+    if action in stat_commands:
+        return stat_commands[action](data)
+    else:
+        return NO_COMMAND_MESSAGE(action)
 
 
+def handle_server_stats(data):
+    db = get_db_client()
+    votes = db.collection(VOTES_COLLECTION)
+    vote_count = 0
+    winner_metacritic_total = 0
+    all_votes = votes.stream()
+    movies = set()
+    for v in all_votes:
+        vote = Vote(v.to_dict())
+        winning_nom = [nom for nom in vote.nominations if nom.won]
+        if len(winning_nom) > 0:
+            winner_metacritic_total += int(winning_nom[0].get_movie(db).metascore)
+        for nomination in vote.nominations:
+            movies.add(nomination.title)
+        vote_count += 1
+    stats_message = "**Server Stats**\n"
+    stats_message += (
+        f"{len(movies)} movies have been nominated, and we have watched {vote_count} movies with an average metacritic score of {winner_metacritic_total / (len(movies)-1)}\n"
+    )
+
+    return stats_message
+
+
+def handle_user_stats(data):
+    db = get_db_client()
+    pass
+
+
+def handle_movie_stats(data):
+    db = get_db_client()
+    pass
+
+
+# Discord request verification
 def verify_request(request: flask.Request):
     # Your public key can be found on your application in the Developer Portal
     verify_key = VerifyKey(bytes.fromhex(DISCORD_PUBLIC_KEY))
@@ -317,6 +387,7 @@ def verify_request(request: flask.Request):
         flask.abort(401, "invalid request signature")
 
 
+# App entrypoint
 @functions_framework.http
 def hello_http(request: flask.Request):
     """HTTP Cloud Function.
@@ -346,3 +417,25 @@ def hello_http(request: flask.Request):
             "content": content,
         },
     }
+
+
+# App command handler router
+commands = {
+    "vote": handle_vote,
+    "nominate": handle_nominate,
+    "info": handle_info,
+    "stats": handle_stats,
+}
+vote_commands = {
+    "start": handle_vote_start,
+    "end": handle_vote_end,
+    "voters": handle_vote_voters,
+    "cast": handle_vote_cast,
+    "nominations": handle_view_nominations,
+    "delete": handle_delete,
+}
+stat_commands = {
+    "server": handle_server_stats,
+    "user": handle_user_stats,
+    "movie": handle_movie_stats,
+}
