@@ -1,15 +1,13 @@
-from datetime import datetime
-from functools import reduce
 import os
+from datetime import datetime
+
 import flask
 import functions_framework
+import google.generativeai as genai
 from google.cloud import firestore
 from google.cloud.firestore_v1 import Client
-from google.cloud.firestore_v1.services.firestore import FirestoreClient
-from nacl.signing import VerifyKey
 from nacl.exceptions import BadSignatureError
-from requests import request
-import google.generativeai as genai
+from nacl.signing import VerifyKey
 
 # Constants & Config
 GCP_PROJECT_ID = "promising-silo-421623"
@@ -69,13 +67,13 @@ def handle_hello(data):
 
 def handle_notes(data):
     db = get_db_client()
-    write_session_notes(db, data["data"]["value"], get_username(data))
+    write_session_notes(db, data["data"]["options"][0]["value"], get_username(data))
 
 
 def handle_gemini():
     model = genai.GenerativeModel('gemini-1.5-flash-latest')
     prompt = 'Hello, Gemini! Welcome to our Discord server!'
-    print(model.generate_content(prompt).text)
+    return model.generate_content(prompt).text
 
 
 # App entrypoint

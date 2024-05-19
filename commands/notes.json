@@ -1,5 +1,12 @@
 {
     "name": "notes",
-    "type": 3,
-    "description": "Add session notes"
+    "type": 1,
+    "description": "Add session notes",
+    "options": [
+        {
+            "name": "note",
+            "description": "The notes for the session",
+            "type": 3
+        }
+    ]
 }

@@ -14,8 +14,8 @@ def test_notes(mock_db):
     sample_payload["data"] = {
         "id": "1233616675837055047",
         "name": "notes",
-        "value": note,
-        "type": 3,
+        "options": [{"name": "server", "type": 3, "value": note}],
+        "type": 1,
     }
     handle_notes(sample_payload)
     assert note == next(mock_firestore.collection("notes").stream(), {}).to_dict()["notes"]
