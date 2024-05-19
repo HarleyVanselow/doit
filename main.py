@@ -1,27 +1,46 @@
+from datetime import datetime
 from functools import reduce
 import os
 import flask
 import functions_framework
 from google.cloud import firestore
+from google.cloud.firestore_v1 import Client
+from google.cloud.firestore_v1.services.firestore import FirestoreClient
 from nacl.signing import VerifyKey
 from nacl.exceptions import BadSignatureError
 from requests import request
 import google.generativeai as genai
 
-
 # Constants & Config
 GCP_PROJECT_ID = "promising-silo-421623"
 DISCORD_PUBLIC_KEY = "9416d2be504b253e228d3149e29825294715d261c348d9c7e2618276bb1419c8"
 NO_COMMAND_MESSAGE = lambda x: f"No {x} command registered!"
+NOTES_COLLECTION = "notes"
 
-
-# Configre Gemini key
-genai.configure(api_key=os.environ["API_KEY"])
+# Configure Gemini key
+genai.configure(api_key=os.getenv("GEMINI_API_KEY", None))
 
 
 # DB interactions
-def get_db_client():
+def get_db_client() -> Client:
     return firestore.Client(project=GCP_PROJECT_ID)
+
+
+def get_notes(db, user=None, private=False):
+    query = db.Collection(NOTES_COLLECTION).where("private", "==", private)
+    if user:
+        query = query.where("user", "==", user)
+    return [doc.to_dict()["notes"] for doc in query.stream()]
+
+
+def write_session_notes(db, notes, user, private=False):
+    note_doc = db.collection(NOTES_COLLECTION).document()
+    note_doc.set({
+        "notes": notes,
+        "user": user,
+        "session_date": datetime.now(),
+        "private": private
+    })
 
 
 # Helper functions
@@ -46,6 +65,11 @@ def verify_request(request: flask.Request):
 
 def handle_hello(data):
     return "Hello! Let's doit! (TM)"
+
+
+def handle_notes(data):
+    db = get_db_client()
+    write_session_notes(db, data["data"]["value"], get_username(data))
 
 
 def handle_gemini():
@@ -89,5 +113,6 @@ def hello_http(request: flask.Request):
 # App command handler router
 commands = {
     "hello": handle_hello,
-    "gemini": handle_gemini
+    "gemini": handle_gemini,
+    "notes": handle_notes
 }
