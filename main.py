@@ -10,7 +10,7 @@ from requests import request
 # Constants & Config
 GCP_PROJECT_ID = "promising-silo-421623"
 DISCORD_PUBLIC_KEY = "9416d2be504b253e228d3149e29825294715d261c348d9c7e2618276bb1419c8"
-
+NO_COMMAND_MESSAGE = lambda x: f"No {x} command registered!"
 
 # DB interactions
 def get_db_client():
