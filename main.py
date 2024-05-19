@@ -15,8 +15,8 @@ DISCORD_PUBLIC_KEY = "9416d2be504b253e228d3149e29825294715d261c348d9c7e2618276bb
 NO_COMMAND_MESSAGE = lambda x: f"No {x} command registered!"
 
 
-# Configre Gemini key
-genai.configure(api_key=os.environ["API_KEY"])
+# Configure Gemini key
+genai.configure(api_key=os.environ["GEMINI_API_KEY"])
 
 
 # DB interactions
