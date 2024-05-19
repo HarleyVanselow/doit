@@ -1,9 +1,33 @@
-from unittest.mock import patch
-
+from unittest.mock import patch, MagicMock
+from main import handle_hello, handle_gemini
 from mockfirestore import MockFirestore
+import os
 
 
 @patch("main.get_db_client")
 def test_basic(mock_db):
     mock_firestore = MockFirestore()
     mock_db.return_value = mock_firestore
+
+
+@patch("main.genai.GenerativeModel")
+def test_handle_gemini(MockGenerativeModel):
+    # Arrange: Set up the mock object and its return values
+    mock_model = MockGenerativeModel.return_value
+    mock_response = MagicMock()
+    mock_response.text = "Hello, human! This is a mock response!"
+    mock_model.generate_content.return_value = mock_response
+
+    # Act: Call the function under test
+    with patch('builtins.print') as mock_print:
+        handle_gemini()
+
+    # Assert: Verify the behavior of the function
+    MockGenerativeModel.assert_called_once_with('gemini-1.5-flash-latest')
+    mock_model.generate_content.assert_called_once_with(
+        'Hello, Gemini! Welcome to our Discord server!'
+    )
+    mock_print.assert_called_once_with(
+        'Hello, human! This is a mock response!'
+    )
+                                                        
