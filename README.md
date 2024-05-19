@@ -1,2 +1,2 @@
-# moviebot
-Discord bot for nominating &amp; voting on movies. Runs for free on cloud compute
+# Do It
+Discord bot for doing things. Runs for free on Google cloud compute. AI may be involved.
