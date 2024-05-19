@@ -43,7 +43,7 @@ jobs:
     - name: Terraform Plan
       env:
         GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
-        TF_VAR_OMDB_API_KEY: ${{ secrets.OMDB_API_KEY }}
+        TF_VAR_GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       working-directory: ./terraform
       run: terraform plan -input=false
 
@@ -53,5 +53,5 @@ jobs:
       working-directory: ./terraform
       env:
         GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
-        TF_VAR_OMDB_API_KEY: ${{ secrets.OMDB_API_KEY }}
+        TF_VAR_GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       run: terraform apply -auto-approve -input=false

@@ -6,7 +6,7 @@ terraform {
     }
   }
   backend "gcs" {
-    bucket = "moviebot-code-storage"
+    bucket = "doit-code-storage"
     prefix = "terraform/state"
   }
 }
@@ -14,16 +14,16 @@ provider "google" {
   project = "promising-silo-421623"
   region  = "us-east1"
 }
-variable "OMDB_API_KEY" {}
+variable "GEMINI_API_KEY" {}
 
-resource "google_cloudfunctions2_function" "moviebot" {
-  name        = "moviebot"
+resource "google_cloudfunctions2_function" "doit" {
+  name        = "doit"
   description = "My function"
   location    = "us-east1"
 
   service_config {
     environment_variables = {
-      "OMDB_API_KEY" : var.OMDB_API_KEY
+      "GEMINI_API_KEY" : var.GEMINI_API_KEY
     }
   }
   build_config {
@@ -39,7 +39,7 @@ resource "google_cloudfunctions2_function" "moviebot" {
   }
 }
 resource "google_storage_bucket" "bucket" {
-  name     = "moviebot-code-storage"
+  name     = "doit-code-storage"
   location = "US"
 }
 
@@ -50,9 +50,9 @@ resource "google_storage_bucket_object" "archive" {
 }
 
 resource "google_cloud_run_service_iam_binding" "binding" {
-  location = google_cloudfunctions2_function.moviebot.location
-  project  = google_cloudfunctions2_function.moviebot.project
-  service  = google_cloudfunctions2_function.moviebot.name
+  location = google_cloudfunctions2_function.doit.location
+  project  = google_cloudfunctions2_function.doit.project
+  service  = google_cloudfunctions2_function.doit.name
   role     = "roles/run.invoker"
   members = [
     "allUsers"

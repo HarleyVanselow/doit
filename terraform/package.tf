@@ -23,5 +23,5 @@ data "archive_file" "archive" {
   ]
 }
 variable "name" {
-  default = "moviebot"
+  default = "doit"
 }
