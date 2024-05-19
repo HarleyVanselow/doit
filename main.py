@@ -89,5 +89,5 @@ def hello_http(request: flask.Request):
 # App command handler router
 commands = {
     "hello": handle_hello,
-    "gemini": 
+    "gemini": handle_gemini
 }
