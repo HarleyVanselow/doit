@@ -6,11 +6,18 @@ from google.cloud import firestore
 from nacl.signing import VerifyKey
 from nacl.exceptions import BadSignatureError
 from requests import request
+import google.generativeai as genai
+
 
 # Constants & Config
 GCP_PROJECT_ID = "promising-silo-421623"
 DISCORD_PUBLIC_KEY = "9416d2be504b253e228d3149e29825294715d261c348d9c7e2618276bb1419c8"
 NO_COMMAND_MESSAGE = lambda x: f"No {x} command registered!"
+
+
+# Configre Gemini key
+genai.configure(api_key=os.environ["API_KEY"])
+
 
 # DB interactions
 def get_db_client():
@@ -36,8 +43,16 @@ def verify_request(request: flask.Request):
     except BadSignatureError:
         flask.abort(401, "invalid request signature")
 
+
 def handle_hello(data):
     return "Hello! Let's doit! (TM)"
+
+
+def handle_gemini():
+    model = genai.GenerativeModel('gemini-1.5-flash-latest')
+    prompt = 'Hello, Gemini! Welcome to our Discord server!'
+    print(model.generate_content(prompt).text)
+
 
 # App entrypoint
 @functions_framework.http
@@ -74,4 +89,5 @@ def hello_http(request: flask.Request):
 # App command handler router
 commands = {
     "hello": handle_hello,
+    "gemini": 
 }
