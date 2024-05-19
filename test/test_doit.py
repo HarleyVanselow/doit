@@ -1,10 +1,9 @@
 from unittest.mock import patch, MagicMock
-from main import handle_hello, handle_gemini
-from mockfirestore import MockFirestore
-import os
 
-from main import handle_hello, handle_notes
-from test.test_data import sample_payload
+from mockfirestore import MockFirestore
+
+from main import handle_hello, handle_notes, handle_gemini
+from test_data import sample_payload
 
 
 @patch("main.get_db_client")
