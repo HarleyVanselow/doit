@@ -136,7 +136,9 @@ def handle_all_notes(data):
     notes = get_all_notes_and_sort_by_date(db)
     result = "Here are all the session notes:\n"
     for idx, note in enumerate(notes):
-        session_date = note["session_date"].strftime("%Y-%m-%d %H:%M")
+        session_date = datetime.fromtimestamp(
+            note["session_date"]
+        ).strftime("%Y-%m-%d %H:%M")
         result = (
             result
             + f"Week {idx + 1}, date {session_date}: \n"
@@ -203,7 +205,9 @@ def handle_dragonbot(data):
 
         prompt = prompt_intro
         for idx, note in enumerate(notes):
-            session_date = note["session_date"].strftime("%Y-%m-%d %H:%M")
+            session_date = datetime.fromtimestamp(
+                note["session_date"]
+            ).strftime("%Y-%m-%d %H:%M")
             prompt = (
                 prompt + f"Week {idx + 1}, date {session_date}: \n" + note["notes"] + "\n"
             )
