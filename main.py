@@ -161,11 +161,11 @@ def handle_dragonbot(data):
             prompt + f"Week {idx + 1}, date {session_date}: \n" + note["notes"] + "\n"
         )
     prompt = prompt + prompt_end
-
+    print("Retrieved & formatted session notes, asking Gemini...")
     # Ask Gemini
     model = genai.GenerativeModel(GEMINI_MODEL_TYPE)
     response = model.generate_content(prompt).text
-
+    print("Gemini response returned")
     return format_call_response(get_username(data), prompt, "Dragonbot", response)
 
 
