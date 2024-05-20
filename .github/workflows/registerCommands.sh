@@ -16,7 +16,7 @@ for file in $(ls "$JSON_DIR"); do
         response=$(curl -s -o /dev/null -w "%{http_code}" -X POST -H "Content-Type: application/json" -H "Authorization: Bot $DISCORD_BOT_TOKEN" -d "$json_data" "$API_ENDPOINT")
 
         # Check if the request was successful
-        if [[ $response == "201" ]]; then
+        if [[ $response == "200" || $response == "201" ]]; then
             echo "Command from file $file successfully added."
         else
             echo "Failed to add command from file $file. Response: $response"
