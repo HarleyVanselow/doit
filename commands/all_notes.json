@@ -1,0 +1,5 @@
+{
+    "name": "get_all_notes",
+    "type": 1,
+    "description": "Get all session notes so far"
+}

@@ -55,7 +55,8 @@ def test_handle_gemini(MockGenerativeModel):
 
 
 @patch("main.genai.GenerativeModel")
-def test_handle_dragonbot(MockGenerativeModel):
+@patch("main.get_db_client")
+def test_handle_dragonbot(MockGenerativeModel, mock_db):
     # Set up mock model
     mock_model = MockGenerativeModel.return_value
     mock_response = MagicMock()

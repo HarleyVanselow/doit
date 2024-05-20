@@ -121,6 +121,22 @@ def handle_hello(data):
     return "Hello! Let's doit! (TM)"
 
 
+def handle_all_notes(data):
+    # Fetch all session notes from db and display them
+    db = get_db_client()
+    notes = get_all_notes_and_sort_by_date(db)
+    result = "Here are all the session notes:\n"
+    for idx, note in enumerate(notes):
+        session_date = note["session_date"].strftime("%Y-%m-%d %H:%M")
+        result = (
+            result
+            + f"Week {idx + 1}, date {session_date}: \n"
+            + note["notes"]
+            + "\n"
+        )
+    return result
+
+
 def handle_notes(data):
     db = get_db_client()
     write_session_notes(db, data["data"]["options"][0]["value"], get_username(data))
@@ -225,4 +241,5 @@ commands = {
     "gemini": handle_gemini,
     "notes": handle_notes,
     "dragonbot": handle_dragonbot,
+    "all_notes": handle_all_notes
 }
