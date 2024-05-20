@@ -183,7 +183,7 @@ def handle_gemini(data):
 
 def format_call_response(caller, call, responder, response):
     result = f"**{caller}**:\n> " + call + "\n"
-    result += f"**{responder}**:\n> " + response
+    result += f"**{responder}**:\n>>> " + response
     return result
 
 

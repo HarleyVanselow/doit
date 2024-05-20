@@ -51,18 +51,18 @@ def test_handle_gemini(MockGenerativeModel):
         sample_prompt
     )
     assert result == '**quaznal**:\n> ' + sample_prompt + '\n' + \
-           '**Gemini**:\n> ' + 'Hello, human! This is a mock response!'
+           '**Gemini**:\n>>> ' + 'Hello, human! This is a mock response!'
 
 
 @patch("main.genai.GenerativeModel")
-def test_handle_dragonbot(MockGenerativeModel):
+@patch("main.get_db_client")
+def test_handle_dragonbot(MockGenerativeModel, mock_db):
     # Set up mock model
     mock_model = MockGenerativeModel.return_value
     mock_response = MagicMock()
     mock_response.text = "Hello, human! Here is a good summary!"
 
     # Set up mock database and add notes
-    mock_db = MockFirestore()
     mock_db.collection("notes").add({
         "session_date": "2020-11-14",
         "notes": "Week 1! So excited!",
