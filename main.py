@@ -15,7 +15,7 @@ DISCORD_PUBLIC_KEY = "9416d2be504b253e228d3149e29825294715d261c348d9c7e2618276bb
 
 NOTES_COLLECTION = "notes"
 CONVERSATION_COLLECTION = "conversation"
-GEMINI_MODEL_TYPE = 'gemini-1.5-flash-latest'
+GEMINI_MODEL_TYPE = "gemini-1.5-flash-latest"
 
 # Configure Gemini key
 genai.configure(api_key=os.getenv("GEMINI_API_KEY", None))
@@ -35,12 +35,14 @@ def get_notes(db, user=None, private=False):
 
 def write_session_notes(db, notes, user, private=False):
     note_doc = db.collection(NOTES_COLLECTION).document()
-    note_doc.set({
-        "notes": notes,
-        "user": user,
-        "session_date": firestore.SERVER_TIMESTAMP,
-        "private": private
-    })
+    note_doc.set(
+        {
+            "notes": notes,
+            "user": user,
+            "session_date": firestore.SERVER_TIMESTAMP,
+            "private": private,
+        }
+    )
 
 
 def log_conversation_message(db, user, message):
@@ -48,7 +50,10 @@ def log_conversation_message(db, user, message):
 
 
 def get_current_conversation(db, to_dict=True):
-    doc = next(db.collection(CONVERSATION_COLLECTION).where("active", "==", True).stream(), None)
+    doc = next(
+        db.collection(CONVERSATION_COLLECTION).where("active", "==", True).stream(),
+        None,
+    )
     if doc and to_dict:
         return doc.to_dict()
     return doc
@@ -58,20 +63,25 @@ def add_to_conversation(db, message):
     active_conversation = get_current_conversation(db, False)
     if active_conversation:
         active_conversation_dict = active_conversation.to_dict()
-        db.collection(CONVERSATION_COLLECTION).document(active_conversation.id) \
-            .update({"messages": active_conversation_dict["messages"] + [message]})
+        db.collection(CONVERSATION_COLLECTION).document(active_conversation.id).update(
+            {"messages": active_conversation_dict["messages"] + [message]}
+        )
     else:
         new_conversation = db.collection(CONVERSATION_COLLECTION).document()
-        new_conversation.set({
-            "messages": [message],
-            "started_at": firestore.SERVER_TIMESTAMP,
-            "active": True
-        })
+        new_conversation.set(
+            {
+                "messages": [message],
+                "started_at": firestore.SERVER_TIMESTAMP,
+                "active": True,
+            }
+        )
 
 
 def end_conversation(db):
     conversation = get_current_conversation(db, False)
-    db.collection(CONVERSATION_COLLECTION).document(conversation.id).update({"active": False})
+    db.collection(CONVERSATION_COLLECTION).document(conversation.id).update(
+        {"active": False}
+    )
 
 
 # Helper functions
@@ -79,7 +89,8 @@ def get_username(data):
     return data["member"]["user"]["username"]
 
 
-def no_command_message(x): return f"No {x} command registered!"
+def no_command_message(x):
+    return f"No {x} command registered!"
 
 
 def get_all_notes_and_sort_by_date(db):
@@ -135,27 +146,26 @@ def handle_dragonbot(data):
     prompt_intro = "We are playing a Dungeons and Dragons 5e campaign, \
         and here are the weekly session notes from our adventures. \
         Please read them carefully.\n"
-    prompt_end = f"Please answer our question: {question} \n" + \
-        "Refer to the session notes, and please don't invent things that did not happen!" +\
-        "If the question cannot be answered from the session notes," + \
-        "please say that you do not know the answer."
+    prompt_end = (
+        f"Please answer our question: {question} \n"
+        + "Refer to the session notes, and please don't invent things that did not happen!"
+        + "If the question cannot be answered from the session notes,"
+        + "please say that you do not know the answer."
+    )
 
     prompt = prompt_intro
     for idx, note in enumerate(notes):
-        session_date = note["session_date"].strftime('%Y-%m-%d %H:%M')
-        prompt = prompt + \
-             f"Week {idx + 1}, date {session_date}: \n" + \
-             note["notes"] + "\n"
+        session_date = note["session_date"].strftime("%Y-%m-%d %H:%M")
+        prompt = (
+            prompt + f"Week {idx + 1}, date {session_date}: \n" + note["notes"] + "\n"
+        )
     prompt = prompt + prompt_end
 
     # Ask Gemini
     model = genai.GenerativeModel(GEMINI_MODEL_TYPE)
     response = model.generate_content(prompt).text
 
-    # Format response
-    result = "I asked: \n\n" + question + "\n\n"
-    result += "Dragonbot said: \n\n" + response
-    return result
+    return format_call_response(get_username(data), prompt, "Dragonbot", response)
 
 
 def handle_gemini(data):
@@ -164,9 +174,15 @@ def handle_gemini(data):
 
     # Get prompt from Discord
     prompt = data["data"]["options"][0]["value"]
-    result = 'I said: \n\n' + prompt + '\n\n'
+    result = "I said: \n" + prompt + "\n"
     response = model.generate_content(prompt).text
-    result += 'Gemini said: \n\n' + response
+    result += "Gemini said: \n" + response
+    return format_call_response(get_username(data), prompt, "Gemini", response)
+
+
+def format_call_response(caller, call, responder, response):
+    result = f"*{caller}*:\n>>>" + call + "\n"
+    result += f"*{responder}*:\n>>>" + response
     return result
 
 
@@ -207,5 +223,5 @@ commands = {
     "hello": handle_hello,
     "gemini": handle_gemini,
     "notes": handle_notes,
-    "dragonbot": handle_dragonbot
+    "dragonbot": handle_dragonbot,
 }
