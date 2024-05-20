@@ -27,7 +27,7 @@ def test_handle_gemini(MockGenerativeModel):
     # Arrange: Set up the mock object and its return values
     mock_model = MockGenerativeModel.return_value
     mock_response = MagicMock()
-    mock_response.text = "Hello, human! This is a mock response!"
+    mock_response.text = 'Hello, human! This is a mock response!'
     mock_model.generate_content.return_value = mock_response
 
     # Act: Call the function under test
@@ -49,8 +49,8 @@ def test_handle_gemini(MockGenerativeModel):
     mock_model.generate_content.assert_called_once_with(
         sample_prompt
     )
-    assert result == 'Hello, human! This is a mock response!'
-
+    assert result == 'I said: \n' + sample_prompt + '\n' + \
+        'Gemini said: \n' + 'Hello, human! This is a mock response!'
 
 
 def test_hello():
