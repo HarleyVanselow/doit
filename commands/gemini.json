@@ -2,6 +2,7 @@
     "name": "gemini",
     "type": 1,
     "description": "Talk to Gemini",
+    "integration_types":[0,1],
     "options": [
         {
             "name": "prompt",

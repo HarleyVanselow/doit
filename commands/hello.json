@@ -1,5 +1,6 @@
 {
     "name": "hello",
     "type": 1,
-    "description": "Say hello to doit"
+    "description": "Say hello to doit",
+    "integration_types":[0,1]
 }

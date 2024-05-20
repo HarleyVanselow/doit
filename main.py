@@ -96,7 +96,10 @@ def end_conversation(db):
 
 # Helper functions
 def get_username(data):
-    return data["member"]["user"]["username"]
+    if "member" in data:
+        return data["member"]["user"]["username"]
+    else:
+        return data["user"]["username"]
 
 
 def no_command_message(x):

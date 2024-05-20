@@ -1,5 +1,6 @@
 {
     "name": "get_all_notes",
     "type": 1,
-    "description": "Get all session notes so far"
+    "description": "Get all session notes so far",
+    "integration_types":[0,1]
 }

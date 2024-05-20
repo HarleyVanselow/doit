@@ -8,5 +8,6 @@
             "description": "Your question for dragonbot",
             "type": 3
         }
-    ]
+    ],
+    "integration_types":[0,1]
 }

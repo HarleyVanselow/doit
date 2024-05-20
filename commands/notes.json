@@ -8,5 +8,6 @@
             "description": "The notes for the session",
             "type": 3
         }
-    ]
+    ],
+    "integration_types":[0,1]
 }
