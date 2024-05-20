@@ -50,8 +50,8 @@ def test_handle_gemini(MockGenerativeModel):
     mock_model.generate_content.assert_called_once_with(
         sample_prompt
     )
-    assert result == '**quaznal**:\n>>> ' + sample_prompt + '\n' + \
-           '**Gemini**:\n>>> ' + 'Hello, human! This is a mock response!'
+    assert result == '**quaznal**:\n> ' + sample_prompt + '\n' + \
+           '**Gemini**:\n> ' + 'Hello, human! This is a mock response!'
 
 
 @patch("main.genai.GenerativeModel")
