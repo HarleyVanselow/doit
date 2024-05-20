@@ -4,9 +4,8 @@ API_ENDPOINT="https://discord.com/api/v10/applications/1233603538651713666/comma
 # Directory containing JSON files
 JSON_DIR="commands"
 echo "Checking for commands inside $JSON_DIR"
-echo $(ls "commands")
 # Iterate through each JSON file in the directory
-for file in "$JSON_DIR/*.json"; do
+for file in $(ls "$JSON_DIR"); do
     # Check if file exists and is a regular file
     echo "Found file $file"
     if [ -f "$file" ]; then
