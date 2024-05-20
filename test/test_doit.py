@@ -31,7 +31,7 @@ def test_handle_gemini(MockGenerativeModel):
 
     # Act: Call the function under test
     with patch('builtins.print') as mock_print:
-        handle_gemini()
+        handle_gemini(sample_payload)
 
     # Assert: Verify the behavior of the function
     MockGenerativeModel.assert_called_once_with('gemini-1.5-flash-latest')
