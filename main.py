@@ -161,12 +161,15 @@ def handle_dragonbot(data):
     if convo_history is not None:
         # Have existing conversation history
         prompt = []
-        # for idx, message in enumerate(convo_history["messages"]):
-        #     if idx == 0:
-        #         prompt = message["message"]
-        #     else:
-        #
-        return "Conversation already in progress!"
+        for idx, message in enumerate(convo_history["messages"]):
+            if message["user"] == 'Gemini':
+                role = "model"
+            else:
+                role = "user"
+            prompt.append({
+                "role": role,
+                "parts": [message["message"]]
+            })
     else:
         # This is a new conversation, so we prompt and input
         # the session notes from scratch
@@ -196,7 +199,7 @@ def handle_dragonbot(data):
         log_conversation_message(db, get_username(data), prompt)
 
     # Ask Gemini
-    print("Retrieved & formatted session notes, asking Gemini...")
+    print("Formatted prompt, asking Gemini...")
     model = genai.GenerativeModel(GEMINI_MODEL_TYPE)
     response = model.generate_content(prompt).text
     print("Gemini response returned")
