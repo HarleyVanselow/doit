@@ -8,9 +8,9 @@ echo "Checking for commands inside $JSON_DIR"
 for file in $(ls "$JSON_DIR"); do
     # Check if file exists and is a regular file
     echo "Found file $file"
-    if [ -f "$file" ]; then
+    if [ -f "$JSON_DIR/$file" ]; then
         # Read contents of the JSON file
-        json_data=$(cat "$file")
+        json_data=$(cat "$JSON_DIR/$file")
         echo "Calling for file $file"
         # Make a POST request to Discord API
         response=$(curl -s -X POST -H "Content-Type: application/json" -H "Authorization: Bot ${{ secrets.DISCORD_BOT_TOKEN }}" -d "$json_data" "$API_ENDPOINT")
