@@ -93,7 +93,7 @@ def hello_http(request: flask.Request):
     request_json = request.get_json(silent=True)
     if request_json["type"] == 1:
         return {"type": 1}
-    print(f"Recieved {request_json}")
+    print(f"Received {request_json}")
     command = request_json["data"]["name"]
     if command in commands:
         content = commands[command](request_json)
