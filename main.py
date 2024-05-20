@@ -50,6 +50,14 @@ def get_username(data):
 def no_command_message(x): return f"No {x} command registered!"
 
 
+def get_all_notes_and_sort_by_date(db):
+    # Fetch all session notes from db
+    notes = get_notes(db)
+    # Sort notes by date from least to most recent
+    notes.sort(key=lambda x: x["session_date"])
+    return notes
+
+
 # Discord request verification
 def verify_request(request: flask.Request):
     # Your public key can be found on your application in the Developer Portal
@@ -86,12 +94,39 @@ def handle_dragonbot(data):
     """
     # Fetch all session notes from db
     db = get_db_client()
-    notes = get_notes(db)
+    notes = get_all_notes_and_sort_by_date(db)
+
+    # Get question from user
+    question = data["data"]["options"][0]["value"]
 
     # Build prompt
+    prompt_intro = """
+        We are playing a Dungeons and Dragons 5e campaign, and here are 
+        the weekly session notes from our adventures. Please read them carefully.
+    """
+    prompt_end = f"""
+        Please answer our question: {question}
+        Refer to the session notes, and please don't invent things that did not happen!
+        If the question cannot be answered from the session notes, please
+        say that you do not know the answer.
+    """
+    prompt = prompt_intro
+    for idx, note in enumerate(notes):
+        prompt = prompt + \
+                 f"Week {idx + 1}, date {note["session_date"]}: \n" + \
+                 note["notes"] + "\n"
+    prompt = prompt + prompt_end
 
     # Ask Gemini
     model = genai.GenerativeModel(GEMINI_MODEL_TYPE)
+    response = model.generate_content(prompt).text
+
+    return prompt
+
+    # Format response
+    # result = "I asked: \n\n" + question + "\n\n"
+    # result += "Dragonbot said: \n\n" + response
+    # return result
 
 
 def handle_gemini(data):
@@ -142,5 +177,6 @@ def hello_http(request: flask.Request):
 commands = {
     "hello": handle_hello,
     "gemini": handle_gemini,
-    "notes": handle_notes
+    "notes": handle_notes,
+    "dragonbot": handle_dragonbot
 }

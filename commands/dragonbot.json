@@ -1,0 +1,12 @@
+{
+    "name": "dragonbot",
+    "type": 1,
+    "description": "Ask the dragon about our misadventures!",
+    "options": [
+        {
+            "name": "prompt",
+            "description": "Your question for dragonbot",
+            "type": 3
+        }
+    ]
+}
