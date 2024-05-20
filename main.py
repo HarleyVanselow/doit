@@ -14,6 +14,7 @@ GCP_PROJECT_ID = "promising-silo-421623"
 DISCORD_PUBLIC_KEY = "9416d2be504b253e228d3149e29825294715d261c348d9c7e2618276bb1419c8"
 
 NOTES_COLLECTION = "notes"
+CONVERSATION_COLLECTION = "conversation"
 GEMINI_MODEL_TYPE = 'gemini-1.5-flash-latest'
 
 # Configure Gemini key
@@ -37,9 +38,40 @@ def write_session_notes(db, notes, user, private=False):
     note_doc.set({
         "notes": notes,
         "user": user,
-        "session_date": datetime.now(),
+        "session_date": firestore.SERVER_TIMESTAMP,
         "private": private
     })
+
+
+def log_conversation_message(db, user, message):
+    add_to_conversation(db, {"message": message, "user": user})
+
+
+def get_current_conversation(db, to_dict=True):
+    doc = next(db.collection(CONVERSATION_COLLECTION).where("active", "==", True).stream(), None)
+    if doc and to_dict:
+        return doc.to_dict()
+    return doc
+
+
+def add_to_conversation(db, message):
+    active_conversation = get_current_conversation(db, False)
+    if active_conversation:
+        active_conversation_dict = active_conversation.to_dict()
+        db.collection(CONVERSATION_COLLECTION).document(active_conversation.id) \
+            .update({"messages": active_conversation_dict["messages"] + [message]})
+    else:
+        new_conversation = db.collection(CONVERSATION_COLLECTION).document()
+        new_conversation.set({
+            "messages": [message],
+            "started_at": firestore.SERVER_TIMESTAMP,
+            "active": True
+        })
+
+
+def end_conversation(db):
+    conversation = get_current_conversation(db, False)
+    db.collection(CONVERSATION_COLLECTION).document(conversation.id).update({"active": False})
 
 
 # Helper functions
