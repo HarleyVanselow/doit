@@ -14,6 +14,7 @@ GCP_PROJECT_ID = "promising-silo-421623"
 DISCORD_PUBLIC_KEY = "9416d2be504b253e228d3149e29825294715d261c348d9c7e2618276bb1419c8"
 NO_COMMAND_MESSAGE = lambda x: f"No {x} command registered!"
 NOTES_COLLECTION = "notes"
+GEMINI_MODEL_TYPE = 'gemini-1.5-flash-latest'
 
 # Configure Gemini key
 genai.configure(api_key=os.getenv("GEMINI_API_KEY", None))
@@ -71,9 +72,31 @@ def handle_notes(data):
     return "Session notes logged!"
 
 
+def handle_dragonbot(data):
+    """
+    Function to query database, build prompt, and ask Gemini a question.
+
+    Args:
+        data:
+
+    Returns: Response from Gemini
+    """
+    # Fetch all session notes from db
+    db = get_db_client()
+    notes = get_notes(db)
+
+    # Build prompt
+
+    # Ask Gemini
+    model = genai.GenerativeModel(GEMINI_MODEL_TYPE)
+
+
 def handle_gemini(data):
-    model = genai.GenerativeModel('gemini-1.5-flash-latest')
-    prompt = 'Hello, Gemini! Welcome to our Discord server!'
+    # Instantiate Gemini model
+    model = genai.GenerativeModel(GEMINI_MODEL_TYPE)
+
+    # Get prompt from Discord
+    prompt = data["data"]["options"][0]["value"]
     return model.generate_content(prompt).text
 
 
