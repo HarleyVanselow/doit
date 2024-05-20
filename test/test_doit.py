@@ -30,17 +30,15 @@ def test_handle_gemini(MockGenerativeModel):
     mock_model.generate_content.return_value = mock_response
 
     # Act: Call the function under test
-    with patch('builtins.print') as mock_print:
-        handle_gemini(sample_payload)
+    result = handle_gemini(sample_payload)
 
     # Assert: Verify the behavior of the function
     MockGenerativeModel.assert_called_once_with('gemini-1.5-flash-latest')
     mock_model.generate_content.assert_called_once_with(
         'Hello, Gemini! Welcome to our Discord server!'
     )
-    mock_print.assert_called_once_with(
-        'Hello, human! This is a mock response!'
-    )
+    assert result == 'Hello, human! This is a mock response!'
+
 
 
 def test_hello():
