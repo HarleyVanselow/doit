@@ -64,18 +64,27 @@ def add_to_conversation(db, message):
     active_conversation = get_current_conversation(db, False)
     if active_conversation:
         active_conversation_dict = active_conversation.to_dict()
-        db.collection(CONVERSATION_COLLECTION).document(active_conversation.id).update(
-            {"messages": active_conversation_dict["messages"] + [message]}
-        )
+        # If the conversation is more than a day old
+        if (int(time.time()) - int(active_conversation_dict["started_at"])) > (60 * 60 * 24):
+            end_conversation(db)
+            start_new_conversation(db, message)
+        else:
+            db.collection(CONVERSATION_COLLECTION).document(active_conversation.id).update(
+                {"messages": active_conversation_dict["messages"] + [message]}
+            )
     else:
-        new_conversation = db.collection(CONVERSATION_COLLECTION).document()
-        new_conversation.set(
-            {
-                "messages": [message],
-                "started_at": int(time.time()),
-                "active": True,
-            }
-        )
+        start_new_conversation(db, message)
+
+
+def start_new_conversation(db, message):
+    new_conversation = db.collection(CONVERSATION_COLLECTION).document()
+    new_conversation.set(
+        {
+            "messages": [message],
+            "started_at": int(time.time()),
+            "active": True,
+        }
+    )
 
 
 def end_conversation(db):
