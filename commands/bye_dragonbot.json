@@ -1,6 +1,5 @@
 {
     "name": "bye_dragonbot",
     "type": 1,
-    "description":
-        "End the conversation and say bye to dragonbot! (Use /dragonbot again to start a new conversation with dragonbot.)"
+    "description": "End the conversation and say bye to dragonbot!"
 }
