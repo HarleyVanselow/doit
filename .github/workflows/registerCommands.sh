@@ -13,7 +13,7 @@ for file in $(ls "$JSON_DIR"); do
         json_data=$(cat "$JSON_DIR/$file")
         echo "Calling for file $file"
         # Make a POST request to Discord API
-        response=$(curl -I -X POST -H "Content-Type: application/json" -H "Authorization: Bot $DISCORD_BOT_TOKEN" -d "$json_data" "$API_ENDPOINT")
+        response=$(curl -s -o /dev/null -w "%{http_code}" -X POST -H "Content-Type: application/json" -H "Authorization: Bot $DISCORD_BOT_TOKEN" -d "$json_data" "$API_ENDPOINT")
 
         # Check if the request was successful
         if [[ $response == "201" ]]; then
