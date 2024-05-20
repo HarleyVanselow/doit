@@ -12,7 +12,7 @@ from nacl.signing import VerifyKey
 # Constants & Config
 GCP_PROJECT_ID = "promising-silo-421623"
 DISCORD_PUBLIC_KEY = "9416d2be504b253e228d3149e29825294715d261c348d9c7e2618276bb1419c8"
-NO_COMMAND_MESSAGE = lambda x: f"No {x} command registered!"
+
 NOTES_COLLECTION = "notes"
 GEMINI_MODEL_TYPE = 'gemini-1.5-flash-latest'
 
@@ -26,7 +26,7 @@ def get_db_client() -> Client:
 
 
 def get_notes(db, user=None, private=False):
-    query = db.Collection(NOTES_COLLECTION).where("private", "==", private)
+    query = db.collection(NOTES_COLLECTION).where("private", "==", private)
     if user:
         query = query.where("user", "==", user)
     return [doc.to_dict() for doc in query.stream()]
@@ -45,6 +45,9 @@ def write_session_notes(db, notes, user, private=False):
 # Helper functions
 def get_username(data):
     return data["member"]["user"]["username"]
+
+
+def no_command_message(x): return f"No {x} command registered!"
 
 
 # Discord request verification
@@ -122,7 +125,7 @@ def hello_http(request: flask.Request):
     if command in commands:
         content = commands[command](request_json)
     else:
-        content = NO_COMMAND_MESSAGE(command)
+        content = no_command_message(command)
     return {
         "type": 4,
         "data": {

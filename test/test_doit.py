@@ -2,7 +2,7 @@ from unittest.mock import patch, MagicMock
 
 from mockfirestore import MockFirestore
 
-from main import handle_hello, handle_notes, handle_gemini
+from main import handle_hello, handle_notes, handle_gemini, get_notes
 from main import GEMINI_MODEL_TYPE
 from test_data import sample_payload
 
@@ -19,7 +19,7 @@ def test_notes(mock_db):
         "type": 1,
     }
     handle_notes(sample_payload)
-    assert note == next(mock_firestore.collection("notes").stream(), {}).to_dict()["notes"]
+    assert note == get_notes(mock_firestore)[0]["notes"]
 
 
 @patch("main.genai.GenerativeModel")
