@@ -217,7 +217,7 @@ def handle_dragonbot(data):
         log_conversation_message(db, get_username(data), prompt)
 
     # Ask Gemini
-    print("Formatted prompt, asking Gemini...")
+    print(f"Formatted prompt, asking Gemini: {prompt}")
     model = genai.GenerativeModel(GEMINI_MODEL_TYPE)
     response = model.generate_content(prompt).text
     print("Gemini response returned")
@@ -246,6 +246,9 @@ def handle_gemini(data):
 
     # Get prompt from Discord
     prompt = data["data"]["options"][0]["value"]
+    print(f"Formatted prompt, asking Gemini: {prompt}")
+
+    # Ask Gemini
     response = model.generate_content(prompt).text
     return format_call_response(
         get_username(data), prompt, "Gemini", response)
