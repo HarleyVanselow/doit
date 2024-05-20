@@ -28,7 +28,7 @@ def get_notes(db, user=None, private=False):
     query = db.Collection(NOTES_COLLECTION).where("private", "==", private)
     if user:
         query = query.where("user", "==", user)
-    return [doc.to_dict()["notes"] for doc in query.stream()]
+    return [doc.to_dict() for doc in query.stream()]
 
 
 def write_session_notes(db, notes, user, private=False):
@@ -68,9 +68,10 @@ def handle_hello(data):
 def handle_notes(data):
     db = get_db_client()
     write_session_notes(db, data["data"]["options"][0]["value"], get_username(data))
+    return "Session notes logged!"
 
 
-def handle_gemini():
+def handle_gemini(data):
     model = genai.GenerativeModel('gemini-1.5-flash-latest')
     prompt = 'Hello, Gemini! Welcome to our Discord server!'
     return model.generate_content(prompt).text
