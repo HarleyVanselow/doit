@@ -156,42 +156,65 @@ def handle_dragonbot(data):
     """
     Function to query database, build prompt, and ask Gemini a question.
 
-    Args:
-        data:
-
-    Returns: Response from Gemini
+    Returns: Question from user and response from Gemini
     """
-    # Fetch all session notes from db
+    # Initialize db client
     db = get_db_client()
-    notes = get_all_notes_and_sort_by_date(db)
+
+    # Check if the conversation is ongoing
+    convo_history = get_current_conversation(db)
 
     # Get question from user
     question = data["data"]["options"][0]["value"]
 
-    # Build prompt
-    prompt_intro = "We are playing a Dungeons and Dragons 5e campaign, \
-        and here are the weekly session notes from our adventures. \
-        Please read them carefully.\n"
-    prompt_end = (
-        f"Please answer our question: {question} \n"
-        + "Refer to the session notes, and please don't invent things that did not happen!"
-        + "If the question cannot be answered from the session notes,"
-        + "please say that you do not know the answer."
-    )
+    if convo_history is not None:
+        # Have existing conversation history
+        prompt = []
+        # for idx, message in enumerate(convo_history["messages"]):
+        #     if idx == 0:
+        #         prompt = message["message"]
+        #     else:
+        #
+        return "Conversation already in progress!"
+    else:
+        # This is a new conversation, so we prompt and input
+        # the session notes from scratch
+        # Fetch all session notes from db
+        notes = get_all_notes_and_sort_by_date(db)
 
-    prompt = prompt_intro
-    for idx, note in enumerate(notes):
-        session_date = note["session_date"].strftime("%Y-%m-%d %H:%M")
-        prompt = (
-            prompt + f"Week {idx + 1}, date {session_date}: \n" + note["notes"] + "\n"
+        # Build prompt from the beginning
+        prompt_intro = "We are playing a Dungeons and Dragons 5e campaign, \
+            and here are the weekly session notes from our adventures. \
+            Please read them carefully.\n"
+        prompt_end = (
+            f"Please answer our question: {question} \n"
+            + "Refer to the session notes, and please don't invent things that did not happen!"
+            + "If the question cannot be answered from the session notes,"
+            + "please say that you do not know the answer."
         )
-    prompt = prompt + prompt_end
-    print("Retrieved & formatted session notes, asking Gemini...")
+
+        prompt = prompt_intro
+        for idx, note in enumerate(notes):
+            session_date = note["session_date"].strftime("%Y-%m-%d %H:%M")
+            prompt = (
+                prompt + f"Week {idx + 1}, date {session_date}: \n" + note["notes"] + "\n"
+            )
+        prompt = prompt + prompt_end
+
+        # Log the prompt to db
+        log_conversation_message(db, get_username(data), prompt)
+
     # Ask Gemini
+    print("Retrieved & formatted session notes, asking Gemini...")
     model = genai.GenerativeModel(GEMINI_MODEL_TYPE)
     response = model.generate_content(prompt).text
     print("Gemini response returned")
-    return format_call_response(get_username(data), question, "Dragonbot", response)
+
+    # Log Gemini's response to db
+    log_conversation_message(db, "Gemini", response)
+
+    return format_call_response(
+        get_username(data), question, "Dragonbot", response)
 
 
 def handle_gemini(data):
@@ -203,7 +226,8 @@ def handle_gemini(data):
     result = "I said: \n" + prompt + "\n"
     response = model.generate_content(prompt).text
     result += "Gemini said: \n" + response
-    return format_call_response(get_username(data), prompt, "Gemini", response)
+    return format_call_response(
+        get_username(data), prompt, "Gemini", response)
 
 
 def format_call_response(caller, call, responder, response):
@@ -250,5 +274,5 @@ commands = {
     "gemini": handle_gemini,
     "notes": handle_notes,
     "dragonbot": handle_dragonbot,
-    "all_notes": handle_all_notes
+    "get_all_notes": handle_all_notes
 }
