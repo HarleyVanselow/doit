@@ -100,7 +100,10 @@ def handle_gemini(data):
 
     # Get prompt from Discord
     prompt = data["data"]["options"][0]["value"]
-    return model.generate_content(prompt).text
+    result = 'I said: \n' + prompt + '\n'
+    response = model.generate_content(prompt).text
+    result += 'Gemini said: \n' + response
+    return result
 
 
 # App entrypoint
