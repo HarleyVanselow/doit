@@ -1,5 +1,12 @@
 {
     "name": "gemini",
     "type": 1,
-    "description": "Talk to Gemini"
+    "description": "Talk to Gemini",
+    "options": [
+        {
+            "name": "prompt",
+            "description": "The message to send to Gemini",
+            "type": 3
+        }
+    ]
 }
