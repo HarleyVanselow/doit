@@ -1,4 +1,5 @@
 import os
+import time
 from datetime import datetime
 
 import flask
@@ -39,7 +40,7 @@ def write_session_notes(db, notes, user, private=False):
         {
             "notes": notes,
             "user": user,
-            "session_date": firestore.SERVER_TIMESTAMP,
+            "session_date": int(time.time()),
             "private": private,
         }
     )
@@ -71,7 +72,7 @@ def add_to_conversation(db, message):
         new_conversation.set(
             {
                 "messages": [message],
-                "started_at": firestore.SERVER_TIMESTAMP,
+                "started_at": int(time.time()),
                 "active": True,
             }
         )
@@ -181,8 +182,8 @@ def handle_gemini(data):
 
 
 def format_call_response(caller, call, responder, response):
-    result = f"*{caller}*:\n>>>" + call + "\n"
-    result += f"*{responder}*:\n>>>" + response
+    result = f"**{caller}**:\n>>> " + call + "\n"
+    result += f"**{responder}**:\n>>> " + response
     return result
 
 
