@@ -182,7 +182,8 @@ def handle_dragonbot(data):
     model = genai.GenerativeModel(GEMINI_MODEL_TYPE)
     response = model.generate_content(prompt).text
     print("Gemini response returned")
-    return format_call_response(get_username(data), question, "Dragonbot", response)
+    return format_call_response(
+        get_username(data), question, "Dragonbot", response)
 
 
 def handle_gemini(data):
@@ -194,7 +195,8 @@ def handle_gemini(data):
     result = "I said: \n" + prompt + "\n"
     response = model.generate_content(prompt).text
     result += "Gemini said: \n" + response
-    return format_call_response(get_username(data), prompt, "Gemini", response)
+    return format_call_response(
+        get_username(data), prompt, "Gemini", response)
 
 
 def format_call_response(caller, call, responder, response):
@@ -241,5 +243,5 @@ commands = {
     "gemini": handle_gemini,
     "notes": handle_notes,
     "dragonbot": handle_dragonbot,
-    "all_notes": handle_all_notes
+    "get_all_notes": handle_all_notes
 }
