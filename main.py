@@ -179,6 +179,11 @@ def handle_dragonbot(data):
                 "role": role,
                 "parts": [message["message"]]
             })
+        # Add new question to prompt
+        prompt.append({
+            "role": "user",
+            "parts": [question]
+        })
     else:
         # This is a new conversation, so we prompt and input
         # the session notes from scratch
