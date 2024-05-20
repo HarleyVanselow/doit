@@ -100,33 +100,30 @@ def handle_dragonbot(data):
     question = data["data"]["options"][0]["value"]
 
     # Build prompt
-    prompt_intro = """
-        We are playing a Dungeons and Dragons 5e campaign, and here are 
-        the weekly session notes from our adventures. Please read them carefully.
-    """
-    prompt_end = f"""
-        Please answer our question: {question}
-        Refer to the session notes, and please don't invent things that did not happen!
-        If the question cannot be answered from the session notes, please
-        say that you do not know the answer.
-    """
+    prompt_intro = "We are playing a Dungeons and Dragons 5e campaign, \
+        and here are the weekly session notes from our adventures. \
+        Please read them carefully.\n"
+    prompt_end = f"Please answer our question: {question} \n" + \
+        "Refer to the session notes, and please don't invent things that did not happen!" +\
+        "If the question cannot be answered from the session notes," + \
+        "please say that you do not know the answer."
+
     prompt = prompt_intro
     for idx, note in enumerate(notes):
+        session_date = note["session_date"].strftime('%Y-%m-%d %H:%M')
         prompt = prompt + \
-                 f"Week {idx + 1}, date {note["session_date"]}: \n" + \
-                 note["notes"] + "\n"
+             f"Week {idx + 1}, date {session_date}: \n" + \
+             note["notes"] + "\n"
     prompt = prompt + prompt_end
 
     # Ask Gemini
     model = genai.GenerativeModel(GEMINI_MODEL_TYPE)
     response = model.generate_content(prompt).text
 
-    return prompt
-
     # Format response
-    # result = "I asked: \n\n" + question + "\n\n"
-    # result += "Dragonbot said: \n\n" + response
-    # return result
+    result = "I asked: \n\n" + question + "\n\n"
+    result += "Dragonbot said: \n\n" + response
+    return result
 
 
 def handle_gemini(data):
@@ -135,9 +132,9 @@ def handle_gemini(data):
 
     # Get prompt from Discord
     prompt = data["data"]["options"][0]["value"]
-    result = 'I said: \n' + prompt + '\n'
+    result = 'I said: \n\n' + prompt + '\n\n'
     response = model.generate_content(prompt).text
-    result += 'Gemini said: \n' + response
+    result += 'Gemini said: \n\n' + response
     return result
 
 

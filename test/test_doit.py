@@ -2,7 +2,8 @@ from unittest.mock import patch, MagicMock
 
 from mockfirestore import MockFirestore
 
-from main import handle_hello, handle_notes, handle_gemini, get_notes
+from main import handle_hello, handle_notes, handle_gemini, \
+    get_notes, handle_dragonbot
 from main import GEMINI_MODEL_TYPE
 from test_data import sample_payload
 
@@ -51,6 +52,40 @@ def test_handle_gemini(MockGenerativeModel):
     )
     assert result == 'I said: \n' + sample_prompt + '\n' + \
         'Gemini said: \n' + 'Hello, human! This is a mock response!'
+
+
+@patch("main.genai.GenerativeModel")
+def test_handle_dragonbot(MockGenerativeModel):
+    # Set up mock model
+    mock_model = MockGenerativeModel.return_value
+    mock_response = MagicMock()
+    mock_response.text = "Hello, human! Here is a good summary!"
+
+    # Set up mock database and add notes
+    mock_db = MockFirestore()
+    mock_db.collection("notes").add({
+        "session_date": "2020-11-14",
+        "notes": "Week 1! So excited!",
+    })
+    mock_db.collection("notes").add({
+        "session_date": "2020-11-21",
+        "notes": "Week 2! So much fun!",
+    })
+
+    sample_prompt = "Hi dragonbot, what happened last week?"
+    sample_payload["data"] = {
+        "id": "1233616675837055047",
+        "name": "dragonbot",
+        "options": [{
+            "name": "prompt",
+            "type": 3,
+            "value": sample_prompt
+        }],
+        "type": 1
+    }
+    result = handle_dragonbot(sample_payload)
+
+
 
 
 def test_hello():
