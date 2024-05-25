@@ -13,6 +13,7 @@ from nacl.signing import VerifyKey
 # Constants & Config
 GCP_PROJECT_ID = "promising-silo-421623"
 DISCORD_PUBLIC_KEY = "9416d2be504b253e228d3149e29825294715d261c348d9c7e2618276bb1419c8"
+DISCORD_APPLICATION_ID = "1233603538651713666"
 
 NOTES_COLLECTION = "notes"
 CONVERSATION_COLLECTION = "conversation"
@@ -279,9 +280,13 @@ def hello_http(request: flask.Request):
         Response object using `make_response`
         <https://flask.palletsprojects.com/en/1.1.x/api/#flask.make_response>.
     """
-    if not "IS_LOCAL" in os.environ:
-        verify_request(request)
     request_json = request.get_json(silent=True)
+    if request_json and "subscription" in request_json:
+        # This is from PubSub
+        print(f"Got PubSub message: {request_json}")
+        return {}
+    if "IS_LOCAL" not in os.environ:
+        verify_request(request)
     if request_json["type"] == 1:
         return {"type": 1}
     print(f"Received {request_json}")
