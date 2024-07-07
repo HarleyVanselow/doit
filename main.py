@@ -1,3 +1,5 @@
+import base64
+import json
 import os
 import time
 from datetime import datetime
@@ -173,7 +175,7 @@ def publish_to_pubsub(project_id, topic_name, data):
   topic_path = publisher.topic_path(project_id, topic_name)
 
   # Encode data as bytes before publishing
-  data_bytes = data.encode('utf-8')
+  data_bytes = json.dumps(data).encode('utf-8')
   future = publisher.publish(topic_path, data=data_bytes)
 
   # Wait for publishing to complete
@@ -323,7 +325,8 @@ def hello_http(request: flask.Request):
     request_json = request.get_json(silent=True)
     if request_json and "subscription" in request_json:
         # This is from PubSub
-        print(f"Got PubSub message: {request_json}")
+        decoded_message = json.loads(base64.decode(request_json["message"]["data"]))
+        print(f"Got PubSub message: {decoded_message}")
         return {}
     if "IS_LOCAL" not in os.environ:
         verify_request(request)
