@@ -2,6 +2,7 @@ import base64
 import json
 import os
 import time
+import requests
 from datetime import datetime
 
 import flask
@@ -22,6 +23,7 @@ DISCORD_APPLICATION_ID = "1233603538651713666"
 NOTES_COLLECTION = "notes"
 CONVERSATION_COLLECTION = "conversation"
 GEMINI_MODEL_TYPE = "gemini-1.5-flash-latest"
+
 
 # Configure Gemini key
 genai.configure(api_key=os.getenv("GEMINI_API_KEY", None))
@@ -269,7 +271,8 @@ def dragonbot_gemini(data):
     log_conversation_message(db, "Gemini", response)
 
     return format_call_response(
-        get_username(data), question, "Dragonbot", response)
+        get_username(data), question, "Dragonbot", response
+    )
 
 
 def handle_bye_dragonbot(data):
@@ -329,6 +332,33 @@ def hello_http(request: flask.Request):
         # This is from PubSub
         decoded_message = json.loads(base64.b64decode(request_json["message"]["data"]))
         print(f"Got PubSub message: {decoded_message}")
+
+        # Query Gemini in appropriate format and return response
+        query_type = decoded_message["data"]["name"]
+        if query_type == 'gemini':
+            # Regular Gemini query
+            response = call_gemini(decoded_message)
+        elif query_type == 'dragonbot':
+            # Dragonbot query
+            response = dragonbot_gemini(decoded_message)
+        else:
+            raise ValueError(f"Unknown query type: {query_type}")
+
+        # Edit Discord message with response
+        id = decoded_message["application_id"]
+        token = decoded_message["token"]
+        url = f"https://discord.com/api/v10/webhooks/{id}/{token}/messages/@original"
+        headers = {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Accept': 'application/json'}
+        payload = {"content": response}
+
+        requests.request(
+            method='PATCH',
+            url=url,
+            headers=headers,
+            data=payload
+        )
         return {}
     if "IS_LOCAL" not in os.environ:
         verify_request(request)
