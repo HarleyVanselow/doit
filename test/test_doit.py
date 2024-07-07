@@ -3,7 +3,7 @@ from unittest.mock import patch, MagicMock
 from mockfirestore import MockFirestore
 
 from main import handle_hello, handle_notes, handle_gemini, get_notes, handle_dragonbot, get_current_conversation, \
-    add_to_conversation, end_conversation
+    add_to_conversation, end_conversation, dragonbot_gemini, call_gemini
 from main import GEMINI_MODEL_TYPE
 from test_data import sample_payload
 
@@ -24,7 +24,7 @@ def test_notes(mock_db):
 
 
 @patch("main.genai.GenerativeModel")
-def test_handle_gemini(MockGenerativeModel):
+def test_call_gemini(MockGenerativeModel):
     # Arrange: Set up the mock object and its return values
     mock_model = MockGenerativeModel.return_value
     mock_response = MagicMock()
@@ -43,7 +43,7 @@ def test_handle_gemini(MockGenerativeModel):
         }],
         "type": 1,
     }
-    result = handle_gemini(sample_payload)
+    result = call_gemini(sample_payload)
 
     # Assert: Verify the behavior of the function
     MockGenerativeModel.assert_called_once_with(GEMINI_MODEL_TYPE)
@@ -56,7 +56,7 @@ def test_handle_gemini(MockGenerativeModel):
 
 @patch("main.genai.GenerativeModel")
 @patch("main.get_db_client")
-def test_handle_dragonbot(MockGenerativeModel, mock_db):
+def test_dragonbot_gemini(MockGenerativeModel, mock_db):
     # Set up mock model
     mock_model = MockGenerativeModel.return_value
     mock_response = MagicMock()
@@ -83,7 +83,7 @@ def test_handle_dragonbot(MockGenerativeModel, mock_db):
         }],
         "type": 1
     }
-    result = handle_dragonbot(sample_payload)
+    result = dragonbot_gemini(sample_payload)
 
 
 def test_hello():
