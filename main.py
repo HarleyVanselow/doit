@@ -187,9 +187,10 @@ def handle_dragonbot(data):
     """
     publish_to_pubsub(
         project_id=GCP_PROJECT_ID,
-        topic_name="dragonbot-queries",
+        topic_name="gemini-queries",
         data=data
     )
+    return "Dragonbot's thinking about it..."
 
 
 def dragonbot_gemini(data):
@@ -289,6 +290,7 @@ def handle_gemini(data):
         topic_name="gemini-queries",
         data=data
     )
+    return "Gemini's thinking about it..."
 
 def call_gemini(data):
     # Instantiate Gemini model
@@ -325,7 +327,7 @@ def hello_http(request: flask.Request):
     request_json = request.get_json(silent=True)
     if request_json and "subscription" in request_json:
         # This is from PubSub
-        decoded_message = json.loads(base64.decode(request_json["message"]["data"]))
+        decoded_message = json.loads(base64.b64decode(request_json["message"]["data"]))
         print(f"Got PubSub message: {decoded_message}")
         return {}
     if "IS_LOCAL" not in os.environ:
