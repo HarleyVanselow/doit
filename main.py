@@ -305,6 +305,7 @@ def call_gemini(data):
 
     # Ask Gemini
     response = model.generate_content(prompt).text
+    print("Received response from Gemini")
     return format_call_response(
         get_username(data), prompt, "Gemini", response)
 
@@ -352,13 +353,12 @@ def hello_http(request: flask.Request):
             'Content-Type': 'application/x-www-form-urlencoded',
             'Accept': 'application/json'}
         payload = {"content": response}
-
-        requests.request(
-            method='PATCH',
-            url=url,
-            headers=headers,
-            data=payload
-        )
+        print("Updating discord message")
+        update_response = requests.request(method='PATCH', url=url, headers=headers, data=payload)
+        if update_response.status_code != 200:
+            print(f"Error updating message: {update_response.text}")
+        else:
+            print("Updated discord message successfully")
         return {}
     if "IS_LOCAL" not in os.environ:
         verify_request(request)
