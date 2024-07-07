@@ -10,6 +10,8 @@ from google.cloud.firestore_v1 import Client
 from nacl.exceptions import BadSignatureError
 from nacl.signing import VerifyKey
 
+from google.cloud import pubsub_v1
+
 # Constants & Config
 GCP_PROJECT_ID = "promising-silo-421623"
 DISCORD_PUBLIC_KEY = "9416d2be504b253e228d3149e29825294715d261c348d9c7e2618276bb1419c8"
@@ -158,7 +160,37 @@ def handle_notes(data):
     return "Session notes logged!"
 
 
+def publish_to_pubsub(project_id, topic_name, data):
+  """Publishes a string message to a Pub/Sub topic.
+
+  Args:
+      project_id: The ID of the project containing the Pub/Sub topic.
+      topic_name: The name of the Pub/Sub topic to publish to.
+      data: The string message data to publish.
+  """
+
+  publisher = pubsub_v1.PublisherClient()
+  topic_path = publisher.topic_path(project_id, topic_name)
+
+  # Encode data as bytes before publishing
+  data_bytes = data.encode('utf-8')
+  future = publisher.publish(topic_path, data=data_bytes)
+
+  # Wait for publishing to complete
+  message_id = future.result()
+  print(f'Published message ID: {message_id}')
+
 def handle_dragonbot(data):
+    """Receives dragonbot query and push to pub/sub
+    """
+    publish_to_pubsub(
+        project_id=GCP_PROJECT_ID,
+        topic_name="dragonbot-queries",
+        data=data
+    )
+
+
+def dragonbot_gemini(data):
     """
     Function to query database, build prompt, and ask Gemini a question.
 
@@ -249,6 +281,14 @@ def handle_bye_dragonbot(data):
 
 
 def handle_gemini(data):
+    # First publish query to pubsub
+    publish_to_pubsub(
+        project_id=GCP_PROJECT_ID,
+        topic_name="gemini-queries",
+        data=data
+    )
+
+def call_gemini(data):
     # Instantiate Gemini model
     model = genai.GenerativeModel(GEMINI_MODEL_TYPE)
 
