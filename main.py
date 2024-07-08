@@ -295,7 +295,11 @@ def handle_gemini(data):
     )
     return "Gemini's thinking about it..."
 
+
 def call_gemini(data):
+    # Get user for this request
+    user = get_username(data)
+
     # Instantiate Gemini model
     model = genai.GenerativeModel(GEMINI_MODEL_TYPE)
 
@@ -306,8 +310,31 @@ def call_gemini(data):
     # Ask Gemini
     response = model.generate_content(prompt).text
     print("Received response from Gemini")
+
+    response = check_response(response, user)
+
+    print("Formatted response, replying to discord")
     return format_call_response(
-        get_username(data), prompt, "Gemini", response)
+        user, prompt, "Gemini", response)
+
+
+def check_response(response, user):
+    cutoff_message = '[Use /more to see the rest of the response.]'
+
+    # Check that response is within 2000 characters
+    if len(response) + len(cutoff_message) > 2000:
+        print('Original response too long; displaying first 2000 characters and logging the rest in db.')
+        resp_short = response[:2000 - len(cutoff_message)] + cutoff_message
+        assert len(resp_short) <= 2000
+
+        # Log the rest of the response to database
+        db = get_db_client()
+        start_new_conversation(db, {"message": response[len(resp_short):], "user": user})
+
+        # Return shortened response
+        return resp_short
+    else:
+        return response
 
 
 def format_call_response(caller, call, responder, response):
@@ -344,6 +371,8 @@ def hello_http(request: flask.Request):
             response = dragonbot_gemini(decoded_message)
         else:
             raise ValueError(f"Unknown query type: {query_type}")
+
+
 
         # Edit Discord message with response
         id = decoded_message["application_id"]
