@@ -445,5 +445,6 @@ commands = {
     "notes": handle_notes,
     "dragonbot": handle_dragonbot,
     "get_all_notes": handle_all_notes,
-    "bye_dragonbot": handle_bye_dragonbot
+    "bye_dragonbot": handle_bye_dragonbot,
+    "more": handle_more
 }
