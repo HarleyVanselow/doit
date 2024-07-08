@@ -311,7 +311,7 @@ def call_gemini(data):
     response = model.generate_content(prompt).text
     print("Received response from Gemini")
 
-    response = check_response(response, user)
+    response = check_response(response, user, prompt)
 
     print("Formatted response, replying to discord")
     return format_call_response(
