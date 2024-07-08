@@ -242,10 +242,10 @@ def dragonbot_gemini(data):
             and here are the weekly session notes from our adventures. \
             Please read them carefully.\n"
         prompt_end = (
-            f"Please answer our question: {question} \n"
+            f"Please answer our question succinctly: {question} \n"
             + "Refer to the session notes, and please don't invent things that did not happen!"
             + "If the question cannot be answered from the session notes,"
-            + "please say that you do not know the answer."
+            + "please say that you do not know the answer. Be concise!"
         )
 
         prompt = prompt_intro
@@ -270,9 +270,10 @@ def dragonbot_gemini(data):
     # Log Gemini's response to db
     log_conversation_message(db, "Gemini", response)
 
-    return format_call_response(
+    formatted_response = format_call_response(
         get_username(data), question, "Dragonbot", response
     )
+    return formatted_response
 
 
 def handle_bye_dragonbot(data):
@@ -313,9 +314,12 @@ def call_gemini(data):
 
     response = check_response(response, user, prompt)
 
-    print("Formatted response, replying to discord")
-    return format_call_response(
+    formatted_response = format_call_response(
         user, prompt, "Gemini", response)
+    print("Formatted response as follows:")
+    print(formatted_response)
+    print(f"Length of formatted response: {len(formatted_response)}")
+    return formatted_response
 
 
 def check_response(response, user, prompt):
