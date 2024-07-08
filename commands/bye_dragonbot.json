@@ -1,5 +1,6 @@
 {
     "name": "bye_dragonbot",
     "type": 1,
-    "description": "End the conversation and say bye to dragonbot!"
+    "description": "End the conversation and say bye to dragonbot!",
+    "integration_types":[0,1]
 }
