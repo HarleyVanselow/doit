@@ -326,9 +326,9 @@ def check_response(response, user, prompt):
     cutoff_message = '... [Use /more to see the rest of the response.]'
 
     # Check that response is within 2000 characters
-    extra_len = len(user) + len(prompt) + len(cutoff_message) + 10
+    extra_len = len(user) + len(prompt) + len(cutoff_message) + 30
     if len(response) + extra_len > 2000:
-        print('Original response too long; displaying first 2000 characters and logging the rest in db.')
+        print('Original response too long; displaying first ~2000 characters and logging the rest in db.')
         resp_short = response[:2000 - extra_len] + cutoff_message
         print(f"Shortened response: {resp_short}")
         print(f"Length of shortened response: {len(resp_short)}")
