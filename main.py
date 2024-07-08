@@ -24,6 +24,7 @@ NOTES_COLLECTION = "notes"
 CONVERSATION_COLLECTION = "conversation"
 GEMINI_MODEL_TYPE = "gemini-1.5-flash-latest"
 
+LONG_RESPONSE = 'long_response'
 
 # Configure Gemini key
 genai.configure(api_key=os.getenv("GEMINI_API_KEY", None))
@@ -322,11 +323,16 @@ def call_gemini(data):
     return formatted_response
 
 
-def check_response(response, user, prompt):
+def check_response(response, user=None, prompt=None):
     cutoff_message = '... [Use /more to see the rest of the response.]'
+    extra_len = len(cutoff_message) + 30
+
+    if user:
+        extra_len += len(user)
+    if prompt:
+        extra_len += len(prompt)
 
     # Check that response is within 2000 characters
-    extra_len = len(user) + len(prompt) + len(cutoff_message) + 30
     if len(response) + extra_len > 2000:
         print('Original response too long; displaying first ~2000 characters and logging the rest in db.')
         resp_short = response[:2000 - extra_len] + cutoff_message
@@ -336,12 +342,29 @@ def check_response(response, user, prompt):
 
         # Log the rest of the response to database
         db = get_db_client()
-        start_new_conversation(db, {"message": response[len(resp_short):], "user": user})
+        add_to_conversation(db, {"message": response[len(resp_short):], 'user': LONG_RESPONSE})
 
         # Return shortened response
         return resp_short
     else:
         return response
+
+
+def handle_more(data):
+    db = get_db_client()
+    active_conversation = get_current_conversation(db)
+    if active_conversation:
+        active_conversation_dict = active_conversation.to_dict()
+
+        # Get latest message from active conversation
+        latest_message = active_conversation_dict["messages"][-1]
+        if latest_message["user"] != LONG_RESPONSE:
+            return "No more content to display!"
+        else:
+            msg = latest_message["message"]["message"]
+            return check_response(msg)
+    else:
+        return "No more content to display!"
 
 
 def format_call_response(caller, call, responder, response):
