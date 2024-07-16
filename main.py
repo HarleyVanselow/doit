@@ -204,7 +204,7 @@ def dragonbot_gemini(data):
     """
     # Initialize db client
     db = get_db_client()
-
+    user = get_username(data)
     # Check if the conversation is ongoing
     convo_history = get_current_conversation(db)
 
@@ -231,7 +231,7 @@ def dragonbot_gemini(data):
         })
 
         # Log the question to db
-        log_conversation_message(db, get_username(data), question)
+        log_conversation_message(db, user, question)
     else:
         # This is a new conversation, so we prompt and input
         # the session notes from scratch
@@ -260,19 +260,19 @@ def dragonbot_gemini(data):
         prompt = prompt + prompt_end
 
         # Log the prompt to db
-        log_conversation_message(db, get_username(data), prompt)
+        log_conversation_message(db, user, prompt)
 
     # Ask Gemini
     print(f"Formatted prompt, asking Gemini: {prompt}")
     model = genai.GenerativeModel(GEMINI_MODEL_TYPE)
     response = model.generate_content(prompt).text
     print("Gemini response returned")
-
+    response = check_response(response, user, prompt)
     # Log Gemini's response to db
     log_conversation_message(db, "Gemini", response)
 
     formatted_response = format_call_response(
-        get_username(data), question, "Dragonbot", response
+        user, question, "Dragonbot", response
     )
     return formatted_response
 
