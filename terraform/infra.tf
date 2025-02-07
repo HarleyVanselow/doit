@@ -27,7 +27,7 @@ resource "google_cloudfunctions2_function" "doit" {
     }
   }
   build_config {
-    runtime     = "python313"
+    runtime     = "python312"
     entry_point = "hello_http" # Set the entry point 
 
     source {
