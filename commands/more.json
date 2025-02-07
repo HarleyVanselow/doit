@@ -1,0 +1,6 @@
+{
+    "name": "more",
+    "type": 1,
+    "description": "Get the rest of the previous Dragonbot response",
+    "integration_types":[0,1]
+}
