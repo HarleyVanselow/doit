@@ -51,5 +51,5 @@ sample_payload = {
     "token": "xxx",
     "type": 2,
     "version": 1,
-    "member": member_1
+    "member": member_1,
 }

@@ -24,7 +24,7 @@ NOTES_COLLECTION = "notes"
 CONVERSATION_COLLECTION = "conversation"
 GEMINI_MODEL_TYPE = "gemini-2.0-flash"
 
-LONG_RESPONSE = 'long_response'
+LONG_RESPONSE = "long_response"
 
 # Configure Gemini key
 genai.configure(api_key=os.getenv("GEMINI_API_KEY", None))
@@ -73,13 +73,15 @@ def add_to_conversation(db, message):
     if active_conversation:
         active_conversation_dict = active_conversation.to_dict()
         # If the conversation is more than a day old
-        if (int(time.time()) - int(active_conversation_dict["started_at"])) > (60 * 60 * 24):
+        if (int(time.time()) - int(active_conversation_dict["started_at"])) > (
+            60 * 60 * 24
+        ):
             end_conversation(db)
             start_new_conversation(db, message)
         else:
-            db.collection(CONVERSATION_COLLECTION).document(active_conversation.id).update(
-                {"messages": active_conversation_dict["messages"] + [message]}
-            )
+            db.collection(CONVERSATION_COLLECTION).document(
+                active_conversation.id
+            ).update({"messages": active_conversation_dict["messages"] + [message]})
     else:
         start_new_conversation(db, message)
 
@@ -147,14 +149,11 @@ def handle_all_notes(data):
     notes = get_all_notes_and_sort_by_date(db)
     result = "Here are all the session notes:\n"
     for idx, note in enumerate(notes):
-        session_date = datetime.fromtimestamp(
-            note["session_date"]
-        ).strftime("%Y-%m-%d %H:%M")
+        session_date = datetime.fromtimestamp(note["session_date"]).strftime(
+            "%Y-%m-%d %H:%M"
+        )
         result = (
-            result
-            + f"Week {idx + 1}, date {session_date}: \n"
-            + note["notes"]
-            + "\n"
+            result + f"Week {idx + 1}, date {session_date}: \n" + note["notes"] + "\n"
         )
     return result
 
@@ -166,33 +165,29 @@ def handle_notes(data):
 
 
 def publish_to_pubsub(project_id, topic_name, data):
-  """Publishes a string message to a Pub/Sub topic.
+    """Publishes a string message to a Pub/Sub topic.
 
-  Args:
-      project_id: The ID of the project containing the Pub/Sub topic.
-      topic_name: The name of the Pub/Sub topic to publish to.
-      data: The string message data to publish.
-  """
+    Args:
+        project_id: The ID of the project containing the Pub/Sub topic.
+        topic_name: The name of the Pub/Sub topic to publish to.
+        data: The string message data to publish.
+    """
 
-  publisher = pubsub_v1.PublisherClient()
-  topic_path = publisher.topic_path(project_id, topic_name)
+    publisher = pubsub_v1.PublisherClient()
+    topic_path = publisher.topic_path(project_id, topic_name)
 
-  # Encode data as bytes before publishing
-  data_bytes = json.dumps(data).encode('utf-8')
-  future = publisher.publish(topic_path, data=data_bytes)
+    # Encode data as bytes before publishing
+    data_bytes = json.dumps(data).encode("utf-8")
+    future = publisher.publish(topic_path, data=data_bytes)
 
-  # Wait for publishing to complete
-  message_id = future.result()
-  print(f'Published message ID: {message_id}')
+    # Wait for publishing to complete
+    message_id = future.result()
+    print(f"Published message ID: {message_id}")
+
 
 def handle_dragonbot(data):
-    """Receives dragonbot query and push to pub/sub
-    """
-    publish_to_pubsub(
-        project_id=GCP_PROJECT_ID,
-        topic_name="gemini-queries",
-        data=data
-    )
+    """Receives dragonbot query and push to pub/sub"""
+    publish_to_pubsub(project_id=GCP_PROJECT_ID, topic_name="gemini-queries", data=data)
     return "Dragonbot's thinking about it..."
 
 
@@ -215,20 +210,14 @@ def dragonbot_gemini(data):
         # Have existing conversation history
         prompt = []
         for idx, message in enumerate(convo_history["messages"]):
-            if message["user"] == 'Gemini':
+            if message["user"] == "Gemini":
                 role = "model"
             else:
                 role = "user"
-            prompt.append({
-                "role": role,
-                "parts": [message["message"]]
-            })
+            prompt.append({"role": role, "parts": [message["message"]]})
 
         # Add new question to prompt
-        prompt.append({
-            "role": "user",
-            "parts": [question]
-        })
+        prompt.append({"role": "user", "parts": [question]})
 
         # Log the question to db
         log_conversation_message(db, user, question)
@@ -251,11 +240,14 @@ def dragonbot_gemini(data):
 
         prompt = prompt_intro
         for idx, note in enumerate(notes):
-            session_date = datetime.fromtimestamp(
-                note["session_date"]
-            ).strftime("%Y-%m-%d %H:%M")
+            session_date = datetime.fromtimestamp(note["session_date"]).strftime(
+                "%Y-%m-%d %H:%M"
+            )
             prompt = (
-                prompt + f"Week {idx + 1}, date {session_date}: \n" + note["notes"] + "\n"
+                prompt
+                + f"Week {idx + 1}, date {session_date}: \n"
+                + note["notes"]
+                + "\n"
             )
         prompt = prompt + prompt_end
 
@@ -267,13 +259,11 @@ def dragonbot_gemini(data):
     model = genai.GenerativeModel(GEMINI_MODEL_TYPE)
     response = model.generate_content(prompt).text
     print("Gemini response returned")
-    response = check_response(response, user, prompt)
+    response = check_response(response, user, question)
     # Log Gemini's response to db
     log_conversation_message(db, "Gemini", response)
 
-    formatted_response = format_call_response(
-        user, question, "Dragonbot", response
-    )
+    formatted_response = format_call_response(user, question, "Dragonbot", response)
     return formatted_response
 
 
@@ -283,18 +273,12 @@ def handle_bye_dragonbot(data):
     prompt = "Bye dragonbot! Thanks for you help!"
     model = genai.GenerativeModel(GEMINI_MODEL_TYPE)
     response = model.generate_content(prompt).text
-    return format_call_response(
-        get_username(data), prompt, "Dragonbot", response
-    )
+    return format_call_response(get_username(data), prompt, "Dragonbot", response)
 
 
 def handle_gemini(data):
     # First publish query to pubsub
-    publish_to_pubsub(
-        project_id=GCP_PROJECT_ID,
-        topic_name="gemini-queries",
-        data=data
-    )
+    publish_to_pubsub(project_id=GCP_PROJECT_ID, topic_name="gemini-queries", data=data)
     return "Gemini's thinking about it..."
 
 
@@ -315,8 +299,7 @@ def call_gemini(data):
 
     response = check_response(response, user, prompt)
 
-    formatted_response = format_call_response(
-        user, prompt, "Gemini", response)
+    formatted_response = format_call_response(user, prompt, "Gemini", response)
     print("Formatted response as follows:")
     print(formatted_response)
     print(f"Length of formatted response: {len(formatted_response)}")
@@ -324,7 +307,7 @@ def call_gemini(data):
 
 
 def check_response(response, user=None, prompt=None):
-    cutoff_message = '... [Use /more to see the rest of the response.]'
+    cutoff_message = "... [Use /more to see the rest of the response.]"
     extra_len = len(cutoff_message) + 30
 
     if user:
@@ -334,15 +317,19 @@ def check_response(response, user=None, prompt=None):
 
     # Check that response is within 2000 characters
     if len(response) + extra_len > 2000:
-        print('Original response too long; displaying first ~2000 characters and logging the rest in db.')
-        resp_short = response[:2000 - extra_len] + cutoff_message
+        print(
+            "Original response too long; displaying first ~2000 characters and logging the rest in db."
+        )
+        resp_short = response[: 2000 - extra_len] + cutoff_message
         print(f"Shortened response: {resp_short}")
         print(f"Length of shortened response: {len(resp_short)}")
         assert len(resp_short) <= 2000
 
         # Log the rest of the response to database
         db = get_db_client()
-        add_to_conversation(db, {"message": response[len(resp_short):], 'user': LONG_RESPONSE})
+        add_to_conversation(
+            db, {"message": response[len(resp_short) :], "user": LONG_RESPONSE}
+        )
 
         # Return shortened response
         return resp_short
@@ -393,27 +380,28 @@ def hello_http(request: flask.Request):
 
         # Query Gemini in appropriate format and return response
         query_type = decoded_message["data"]["name"]
-        if query_type == 'gemini':
+        if query_type == "gemini":
             # Regular Gemini query
             response = call_gemini(decoded_message)
-        elif query_type == 'dragonbot':
+        elif query_type == "dragonbot":
             # Dragonbot query
             response = dragonbot_gemini(decoded_message)
         else:
             raise ValueError(f"Unknown query type: {query_type}")
-
-
 
         # Edit Discord message with response
         id = decoded_message["application_id"]
         token = decoded_message["token"]
         url = f"https://discord.com/api/v10/webhooks/{id}/{token}/messages/@original"
         headers = {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Accept': 'application/json'}
+            "Content-Type": "application/x-www-form-urlencoded",
+            "Accept": "application/json",
+        }
         payload = {"content": response}
         print("Updating discord message")
-        update_response = requests.request(method='PATCH', url=url, headers=headers, data=payload)
+        update_response = requests.request(
+            method="PATCH", url=url, headers=headers, data=payload
+        )
         if update_response.status_code != 200:
             print(f"Error updating message: {update_response.text}")
         else:
@@ -446,5 +434,5 @@ commands = {
     "dragonbot": handle_dragonbot,
     "get_all_notes": handle_all_notes,
     "bye_dragonbot": handle_bye_dragonbot,
-    "more": handle_more
+    "more": handle_more,
 }
