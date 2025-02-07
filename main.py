@@ -22,7 +22,7 @@ DISCORD_APPLICATION_ID = "1233603538651713666"
 
 NOTES_COLLECTION = "notes"
 CONVERSATION_COLLECTION = "conversation"
-GEMINI_MODEL_TYPE = "gemini-1.5-flash-latest"
+GEMINI_MODEL_TYPE = "gemini-2.0-flash"
 
 LONG_RESPONSE = 'long_response'
 

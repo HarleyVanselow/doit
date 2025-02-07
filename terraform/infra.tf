@@ -20,14 +20,14 @@ resource "google_cloudfunctions2_function" "doit" {
   name        = "doit"
   description = "My function"
   location    = "us-east1"
-
   service_config {
+    min_instance_count = 1
     environment_variables = {
       "GEMINI_API_KEY" : var.GEMINI_API_KEY
     }
   }
   build_config {
-    runtime     = "python312"
+    runtime     = "python313"
     entry_point = "hello_http" # Set the entry point 
 
     source {
